@@ -1,5 +1,5 @@
 import { BaseCollector } from './base.collector.js';
-import { NormalizedProfileData, NormalizedProblem, NormalizedActivity } from '../types/index.js';
+import { NormalizedProfileData } from '../types/index.js';
 
 export class GeeksforGeeksCollector extends BaseCollector {
   readonly platform = 'geeksforgeeks' as const;
@@ -74,57 +74,23 @@ export class GeeksforGeeksCollector extends BaseCollector {
       if (altScore) score = parseInt(altScore[1], 10);
     }
 
-    if (totalSubmissions === 0 && totalSolved > 0) {
-      totalSubmissions = Math.floor(totalSolved * 1.5);
-    }
-
-    // Build difficulty breakdown
-    const easySolved = Math.floor(totalSolved * 0.45);
-    const mediumSolved = Math.floor(totalSolved * 0.40);
-    const hardSolved = Math.max(0, totalSolved - easySolved - mediumSolved);
-
-    // Create activity records for streak
-    const activities: NormalizedActivity[] = [];
-    const today = new Date();
-    for (let i = 0; i < Math.min(currentStreak, 60); i++) {
-      const d = new Date(today.getTime() - i * 86400000);
-      activities.push({
-        platform: 'geeksforgeeks',
-        activity_date: d.toISOString().split('T')[0],
-        problems_solved: 1,
-        submissions: 2
-      });
-    }
-
-    const recent_problems: NormalizedProblem[] = [];
-    if (totalSolved > 0) {
-      recent_problems.push({
-        platform: 'geeksforgeeks',
-        external_id: `gfg_potd_${today.toISOString().split('T')[0]}`,
-        title: 'Problem of the Day',
-        url: 'https://www.geeksforgeeks.org/problem-of-the-day',
-        difficulty: 'Medium',
-        solved_at: today.toISOString()
-      });
-    }
-
     return {
       platform: 'geeksforgeeks',
       username,
       profile_url: url,
       total_solved: totalSolved,
-      easy_solved: easySolved,
-      medium_solved: mediumSolved,
-      hard_solved: hardSolved,
+      easy_solved: 0,
+      medium_solved: 0,
+      hard_solved: 0,
       rating: score, // GFG uses coding score as rating metric
       rank: instituteRank,
       current_streak: currentStreak,
       longest_streak: longestStreak,
       total_submissions: totalSubmissions,
-      active_days: Math.max(currentStreak, Math.min(totalSolved, 365)),
-      recent_problems,
+      active_days: currentStreak > 0 ? currentStreak : 0,
+      recent_problems: [],
       contests: [],
-      activities
+      activities: []
     };
   }
 }

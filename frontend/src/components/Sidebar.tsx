@@ -91,14 +91,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between p-2 rounded-lg hover:bg-[#131b2c] transition-colors cursor-pointer group">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-[#1e293b] text-white border border-[#334155] flex items-center justify-center font-semibold text-sm">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'K'}
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'D'}
             </div>
             <div className="flex flex-col text-left">
               <span className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
-                {user?.name || 'King'}
+                {user?.name || 'Developer'}
               </span>
               <span className="text-xs text-[#64748b]">
-                {user?.headline || '2nd Year - IT'}
+                {user?.headline || 'Coding Profile'}
               </span>
             </div>
           </div>

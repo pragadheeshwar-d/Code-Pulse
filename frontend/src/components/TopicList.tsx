@@ -39,7 +39,7 @@ export const TopicList: React.FC<TopicListProps> = ({ topics }) => {
             <div className="flex-1 h-1.5 bg-[#172238] rounded-full overflow-hidden">
               <div
                 className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                style={{ width: `${hasData ? Math.max(topic.percentage, 4) : 0}%` }}
+                style={{ width: `${hasData ? topic.percentage : 0}%` }}
               />
             </div>
 

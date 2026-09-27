@@ -77,7 +77,7 @@ export class CodeforcesCollector extends BaseCollector {
           solvedSet.add(probId);
           dateActivityMap[subDate].solved += 1;
 
-          // Difficulty categorization
+          // Difficulty categorization based purely on authentic problem rating
           const rating = sub.problem.rating;
           let diff: 'Easy' | 'Medium' | 'Hard' | 'Other' = 'Other';
           if (typeof rating === 'number') {
@@ -91,9 +91,6 @@ export class CodeforcesCollector extends BaseCollector {
               diff = 'Hard';
               hardSolved++;
             }
-          } else {
-            diff = 'Medium';
-            mediumSolved++;
           }
 
           // Topic tags mapping

@@ -116,7 +116,7 @@ export class CodeChefCollector extends BaseCollector {
           title: pTitle,
           slug: pSlug,
           url: `https://www.codechef.com/problems/${pSlug}`,
-          difficulty: 'Medium', // CodeChef difficulties are by division/points
+          difficulty: 'Other', // CodeChef difficulties are by division/points, not Easy/Medium/Hard
           solved_at: new Date().toISOString()
         });
       }
@@ -136,14 +136,14 @@ export class CodeChefCollector extends BaseCollector {
       username,
       profile_url: url,
       total_solved: totalSolved,
-      easy_solved: Math.floor(totalSolved * 0.4),
-      medium_solved: Math.floor(totalSolved * 0.45),
-      hard_solved: Math.max(0, totalSolved - Math.floor(totalSolved * 0.4) - Math.floor(totalSolved * 0.45)),
+      easy_solved: 0,
+      medium_solved: 0,
+      hard_solved: 0,
       rating,
       rank,
       current_streak: 0,
       longest_streak: 0,
-      total_submissions: totalSolved > 0 ? totalSolved * 2 : 0,
+      total_submissions: 0,
       active_days: Object.keys(dateMap).length,
       recent_problems,
       contests,

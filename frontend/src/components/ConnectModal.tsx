@@ -57,25 +57,25 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
     {
       id: 'leetcode',
       name: 'LeetCode',
-      placeholder: 'e.g. neal_wu or your LC username',
+      placeholder: 'Enter your LeetCode username',
       note: 'Connects to official LeetCode GraphQL public profile'
     },
     {
       id: 'codeforces',
       name: 'Codeforces',
-      placeholder: 'e.g. tourist or your CF handle',
+      placeholder: 'Enter your Codeforces handle',
       note: 'Connects to official Codeforces REST API'
     },
     {
       id: 'codechef',
       name: 'CodeChef',
-      placeholder: 'e.g. tourist or your CodeChef handle',
+      placeholder: 'Enter your CodeChef handle',
       note: 'Fetches public CodeChef rating & problem solving history'
     },
     {
       id: 'geeksforgeeks',
       name: 'GeeksforGeeks',
-      placeholder: 'e.g. yash85 or your GFG handle',
+      placeholder: 'Enter your GeeksforGeeks handle',
       note: 'Connects to public GeeksforGeeks profile'
     }
   ];

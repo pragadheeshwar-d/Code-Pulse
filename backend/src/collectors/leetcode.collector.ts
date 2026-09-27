@@ -4,6 +4,48 @@ import { NormalizedProfileData, NormalizedProblem, NormalizedContest, Normalized
 export class LeetCodeCollector extends BaseCollector {
   readonly platform = 'leetcode' as const;
   private readonly graphqlEndpoint = 'https://leetcode.com/graphql';
+  private static readonly questionMetaCache = new Map<string, { difficulty: 'Easy' | 'Medium' | 'Hard' | 'Other'; topic?: string }>();
+
+  private async getQuestionMeta(titleSlug: string): Promise<{ difficulty: 'Easy' | 'Medium' | 'Hard' | 'Other'; topic?: string }> {
+    if (LeetCodeCollector.questionMetaCache.has(titleSlug)) {
+      return LeetCodeCollector.questionMetaCache.get(titleSlug)!;
+    }
+
+    try {
+      const query = `
+        query getQuestion($titleSlug: String!) {
+          question(titleSlug: $titleSlug) {
+            difficulty
+            topicTags { name }
+          }
+        }
+      `;
+      const res = await this.fetchWithTimeout(this.graphqlEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Referer': 'https://leetcode.com'
+        },
+        body: JSON.stringify({ query, variables: { titleSlug } })
+      }, 5000);
+
+      if (res.ok) {
+        const data: any = await res.json();
+        const q = data?.data?.question;
+        const diff = (q?.difficulty === 'Easy' || q?.difficulty === 'Medium' || q?.difficulty === 'Hard')
+          ? q.difficulty
+          : 'Other';
+        const topic = q?.topicTags?.[0]?.name;
+        const result = { difficulty: diff as 'Easy' | 'Medium' | 'Hard' | 'Other', topic };
+        LeetCodeCollector.questionMetaCache.set(titleSlug, result);
+        return result;
+      }
+    } catch {
+      // Fallback if network fails
+    }
+
+    return { difficulty: 'Other' };
+  }
 
   async validateUsername(username: string): Promise<boolean> {
     try {
@@ -159,17 +201,23 @@ export class LeetCodeCollector extends BaseCollector {
       }
     }
 
-    // Recent problems
+    // Recent problems with authentic difficulty and topic resolved from LeetCode
     const recentSubmissionsRaw = json?.data?.recentAcSubmissionList || [];
-    const recent_problems: NormalizedProblem[] = recentSubmissionsRaw.map((sub: any) => ({
-      platform: 'leetcode' as const,
-      external_id: sub.id || sub.titleSlug,
-      title: sub.title,
-      slug: sub.titleSlug,
-      url: `https://leetcode.com/problems/${sub.titleSlug}/`,
-      difficulty: 'Medium', // LeetCode recent submission list does not always include difficulty in this query, default medium or resolved
-      solved_at: new Date(parseInt(sub.timestamp, 10) * 1000).toISOString()
-    }));
+    const recent_problems: NormalizedProblem[] = await Promise.all(
+      recentSubmissionsRaw.slice(0, 20).map(async (sub: any) => {
+        const meta = await this.getQuestionMeta(sub.titleSlug);
+        return {
+          platform: 'leetcode' as const,
+          external_id: sub.id || sub.titleSlug,
+          title: sub.title,
+          slug: sub.titleSlug,
+          url: `https://leetcode.com/problems/${sub.titleSlug}/`,
+          difficulty: meta.difficulty,
+          topic: meta.topic,
+          solved_at: new Date(parseInt(sub.timestamp, 10) * 1000).toISOString()
+        };
+      })
+    );
 
     // Activities from submissionCalendar
     const activities: NormalizedActivity[] = [];

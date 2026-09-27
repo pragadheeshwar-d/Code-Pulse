@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Save, CheckCircle, Clock, ShieldCheck, AlertCircle } from 'lucide-react';
 import { UserProfile, UserSettings, SyncLog, PlatformCardData, PlatformType } from '../types';
 
@@ -19,12 +19,26 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   onUpdateProfile,
   onDisconnectPlatform
 }) => {
-  const [name, setName] = useState(user?.name || 'King');
-  const [headline, setHeadline] = useState(user?.headline || '2nd Year - IT');
-  const [email, setEmail] = useState(user?.email || 'king@codetrack.dev');
+  const [name, setName] = useState(user?.name || '');
+  const [headline, setHeadline] = useState(user?.headline || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [autoSync, setAutoSync] = useState(settings?.auto_sync_interval || '12h');
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setHeadline(user.headline || '');
+      setEmail(user.email || '');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (settings) {
+      setAutoSync(settings.auto_sync_interval || '12h');
+    }
+  }, [settings]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

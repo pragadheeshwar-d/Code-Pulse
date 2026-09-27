@@ -8,7 +8,7 @@ export function initializeDatabase() {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT,
-      headline TEXT DEFAULT '2nd Year - IT',
+      headline TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -146,14 +146,14 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_contest_results_user ON contest_results(user_id);
   `);
 
-  // Ensure default user exists (King, 2nd Year - IT)
+  // Ensure default user profile exists
   const user = db.prepare('SELECT id FROM users LIMIT 1').get();
   if (!user) {
     const now = new Date().toISOString();
     db.prepare(`
       INSERT INTO users (id, name, email, headline, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run('user_default', 'King', 'king@codetrack.dev', '2nd Year - IT', now, now);
+    `).run('user_default', 'Developer', '', '', now, now);
 
     db.prepare(`
       INSERT INTO user_settings (id, user_id, auto_sync_interval, theme, notifications_enabled, updated_at)
