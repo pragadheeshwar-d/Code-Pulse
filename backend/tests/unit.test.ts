@@ -60,6 +60,13 @@ describe('Unit Tests: Core Algorithms and Logic', () => {
     const goalService = new GoalService();
     const userId = 'user_default';
 
+    // Connect platform account
+    const now = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO platform_accounts (id, user_id, platform, username, profile_url, connection_status, created_at, updated_at)
+      VALUES ('acc_lc_goal', ?, 'leetcode', 'user_goal', 'http://lc', 'connected', ?, ?)
+    `).run(userId, now, now);
+
     // Insert activity records
     const today = new Date().toISOString().split('T')[0];
     db.prepare(`

@@ -47,11 +47,12 @@ export class AnalyticsService {
       }
     }
 
-    // Calculate active days and streaks from activity_records
+    // Calculate active days and streaks from activity_records of connected platforms
     const dates = db.prepare(`
-      SELECT DISTINCT activity_date FROM activity_records
-      WHERE user_id = ? AND (problems_solved > 0 OR submissions > 0)
-      ORDER BY activity_date ASC
+      SELECT DISTINCT ar.activity_date FROM activity_records ar
+      JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+      WHERE ar.user_id = ? AND (ar.problems_solved > 0 OR ar.submissions > 0)
+      ORDER BY ar.activity_date ASC
     `).all(userId) as { activity_date: string }[];
 
     const activeDatesList = dates.map(d => d.activity_date);
@@ -81,17 +82,18 @@ export class AnalyticsService {
     if (daysLimit !== null) {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysLimit);
-      dateFilterClause = 'AND activity_date >= ?';
+      dateFilterClause = 'AND ar.activity_date >= ?';
       params.push(startDate.toISOString().split('T')[0]);
     }
 
-    // Aggregate daily solved problems across all platforms
+    // Aggregate daily solved problems across all connected platforms
     const rows = db.prepare(`
-      SELECT activity_date, SUM(problems_solved) as daily_solved
-      FROM activity_records
-      WHERE user_id = ? ${dateFilterClause}
-      GROUP BY activity_date
-      ORDER BY activity_date ASC
+      SELECT ar.activity_date, SUM(ar.problems_solved) as daily_solved
+      FROM activity_records ar
+      JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+      WHERE ar.user_id = ? ${dateFilterClause}
+      GROUP BY ar.activity_date
+      ORDER BY ar.activity_date ASC
     `).all(...params) as { activity_date: string; daily_solved: number }[];
 
     if (rows.length === 0) {
@@ -120,18 +122,19 @@ export class AnalyticsService {
     const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
 
     let query = `
-      SELECT activity_date, platform, problems_solved, submissions
-      FROM activity_records
-      WHERE user_id = ? AND activity_date >= ?
+      SELECT ar.activity_date, ar.platform, ar.problems_solved, ar.submissions
+      FROM activity_records ar
+      JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+      WHERE ar.user_id = ? AND ar.activity_date >= ?
     `;
     const params: any[] = [userId, oneYearAgoStr];
 
     if (platformFilter && platformFilter.toLowerCase() !== 'all') {
-      query += ' AND platform = ?';
+      query += ' AND ar.platform = ?';
       params.push(platformFilter.toLowerCase());
     }
 
-    query += ' ORDER BY activity_date ASC';
+    query += ' ORDER BY ar.activity_date ASC';
 
     const rows = db.prepare(query).all(...params) as {
       activity_date: string;
@@ -248,6 +251,7 @@ export class AnalyticsService {
       SELECT p.topic, COUNT(up.id) as count
       FROM user_problems up
       JOIN problems p ON up.problem_id = p.id
+      JOIN platform_accounts pa ON pa.user_id = up.user_id AND pa.platform = p.platform AND pa.connection_status = 'connected'
       WHERE up.user_id = ? AND p.topic IS NOT NULL AND p.topic != ''
       GROUP BY p.topic
       ORDER BY count DESC
@@ -284,6 +288,7 @@ export class AnalyticsService {
       SELECT p.platform, p.title, p.difficulty, up.solved_at as date, p.url
       FROM user_problems up
       JOIN problems p ON up.problem_id = p.id
+      JOIN platform_accounts pa ON pa.user_id = up.user_id AND pa.platform = p.platform AND pa.connection_status = 'connected'
       WHERE up.user_id = ?
       ORDER BY up.solved_at DESC
       LIMIT ?
@@ -297,7 +302,7 @@ export class AnalyticsService {
   }
 
   /**
-   * Contest analytics
+   * Contest analytics - strictly for connected platforms
    */
   getContests(userId: string, limit: number = 50) {
     const db = getDb();
@@ -306,6 +311,7 @@ export class AnalyticsService {
              cr.rank, cr.problems_solved, cr.rating_before, cr.rating_after, cr.rating_change
       FROM contest_results cr
       JOIN contests c ON cr.contest_id = c.id
+      JOIN platform_accounts pa ON pa.user_id = cr.user_id AND pa.platform = c.platform AND pa.connection_status = 'connected'
       WHERE cr.user_id = ?
       ORDER BY c.contest_date DESC
       LIMIT ?
@@ -325,13 +331,15 @@ export class AnalyticsService {
     const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000).toISOString().split('T')[0];
 
     const thisWeek = db.prepare(`
-      SELECT SUM(problems_solved) as total FROM activity_records
-      WHERE user_id = ? AND activity_date >= ?
+      SELECT SUM(ar.problems_solved) as total FROM activity_records ar
+      JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+      WHERE ar.user_id = ? AND ar.activity_date >= ?
     `).get(userId, weekAgo) as { total: number | null };
 
     const lastWeek = db.prepare(`
-      SELECT SUM(problems_solved) as total FROM activity_records
-      WHERE user_id = ? AND activity_date >= ? AND activity_date < ?
+      SELECT SUM(ar.problems_solved) as total FROM activity_records ar
+      JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+      WHERE ar.user_id = ? AND ar.activity_date >= ? AND ar.activity_date < ?
     `).get(userId, twoWeeksAgo, weekAgo) as { total: number | null };
 
     const thisWeekSolved = thisWeek?.total || 0;
@@ -346,10 +354,11 @@ export class AnalyticsService {
     // 2. Most active platform in past 30 days
     const monthAgo = new Date(now.getTime() - 30 * 86400000).toISOString().split('T')[0];
     const topPlatform = db.prepare(`
-      SELECT platform, SUM(problems_solved) as solved, SUM(submissions) as subs
-      FROM activity_records
-      WHERE user_id = ? AND activity_date >= ?
-      GROUP BY platform
+      SELECT ar.platform, SUM(ar.problems_solved) as solved, SUM(ar.submissions) as subs
+      FROM activity_records ar
+      JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+      WHERE ar.user_id = ? AND ar.activity_date >= ?
+      GROUP BY ar.platform
       ORDER BY solved DESC, subs DESC
       LIMIT 1
     `).get(userId, monthAgo) as { platform: string; solved: number; subs: number } | undefined;
@@ -364,8 +373,9 @@ export class AnalyticsService {
 
     // 3. Active days in past week
     const activeDaysWeek = db.prepare(`
-      SELECT COUNT(DISTINCT activity_date) as cnt FROM activity_records
-      WHERE user_id = ? AND activity_date >= ? AND (problems_solved > 0 OR submissions > 0)
+      SELECT COUNT(DISTINCT ar.activity_date) as cnt FROM activity_records ar
+      JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+      WHERE ar.user_id = ? AND ar.activity_date >= ? AND (ar.problems_solved > 0 OR ar.submissions > 0)
     `).get(userId, weekAgo) as { cnt: number };
 
     if (activeDaysWeek?.cnt > 0) {

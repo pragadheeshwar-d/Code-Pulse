@@ -78,7 +78,29 @@ export class PlatformService {
 
     if (!account) return false;
 
-    // Delete account and cascade related records
+    // Delete all records associated with this user and platform
+    db.prepare(`
+      DELETE FROM contest_results
+      WHERE user_id = ? AND contest_id IN (SELECT id FROM contests WHERE platform = ?)
+    `).run(userId, platform);
+
+    db.prepare(`
+      DELETE FROM activity_records WHERE user_id = ? AND platform = ?
+    `).run(userId, platform);
+
+    db.prepare(`
+      DELETE FROM user_problems
+      WHERE user_id = ? AND problem_id IN (SELECT id FROM problems WHERE platform = ?)
+    `).run(userId, platform);
+
+    db.prepare(`
+      DELETE FROM stat_snapshots WHERE user_id = ? AND platform = ?
+    `).run(userId, platform);
+
+    db.prepare(`
+      DELETE FROM sync_logs WHERE user_id = ? AND platform = ?
+    `).run(userId, platform);
+
     db.prepare(`DELETE FROM platform_accounts WHERE id = ?`).run(account.id);
     return true;
   }

@@ -16,36 +16,39 @@ export class GoalService {
 
       if (g.goal_type === 'problems_solved') {
         let query = `
-          SELECT SUM(problems_solved) as total FROM activity_records
-          WHERE user_id = ? AND activity_date >= ? AND activity_date <= ?
+          SELECT SUM(ar.problems_solved) as total FROM activity_records ar
+          JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+          WHERE ar.user_id = ? AND ar.activity_date >= ? AND ar.activity_date <= ?
         `;
         const params: any[] = [userId, g.start_date, g.end_date];
         if (g.platform) {
-          query += ' AND platform = ?';
+          query += ' AND ar.platform = ?';
           params.push(g.platform);
         }
         const res = db.prepare(query).get(...params) as { total: number | null };
         current = res?.total || 0;
       } else if (g.goal_type === 'active_days') {
         let query = `
-          SELECT COUNT(DISTINCT activity_date) as cnt FROM activity_records
-          WHERE user_id = ? AND activity_date >= ? AND activity_date <= ? AND (problems_solved > 0 OR submissions > 0)
+          SELECT COUNT(DISTINCT ar.activity_date) as cnt FROM activity_records ar
+          JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+          WHERE ar.user_id = ? AND ar.activity_date >= ? AND ar.activity_date <= ? AND (ar.problems_solved > 0 OR ar.submissions > 0)
         `;
         const params: any[] = [userId, g.start_date, g.end_date];
         if (g.platform) {
-          query += ' AND platform = ?';
+          query += ' AND ar.platform = ?';
           params.push(g.platform);
         }
         const res = db.prepare(query).get(...params) as { cnt: number };
         current = res?.cnt || 0;
       } else if (g.goal_type === 'contest_rating') {
         let query = `
-          SELECT MAX(rating) as max_rating FROM stat_snapshots
-          WHERE user_id = ? AND recorded_at >= ?
+          SELECT MAX(ss.rating) as max_rating FROM stat_snapshots ss
+          JOIN platform_accounts pa ON pa.id = ss.platform_account_id AND pa.connection_status = 'connected'
+          WHERE ss.user_id = ? AND ss.recorded_at >= ?
         `;
         const params: any[] = [userId, g.start_date];
         if (g.platform) {
-          query += ' AND platform = ?';
+          query += ' AND ss.platform = ?';
           params.push(g.platform);
         }
         const res = db.prepare(query).get(...params) as { max_rating: number | null };
@@ -55,6 +58,7 @@ export class GoalService {
           SELECT COUNT(DISTINCT cr.contest_id) as cnt
           FROM contest_results cr
           JOIN contests c ON cr.contest_id = c.id
+          JOIN platform_accounts pa ON pa.user_id = cr.user_id AND pa.platform = c.platform AND pa.connection_status = 'connected'
           WHERE cr.user_id = ? AND c.contest_date >= ? AND c.contest_date <= ?
         `;
         const params: any[] = [userId, g.start_date, g.end_date];
