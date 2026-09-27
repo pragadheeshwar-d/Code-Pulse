@@ -1,0 +1,26 @@
+{
+  "name": "codetrack-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-ready Coding Progress Tracker for LeetCode, CodeChef, GeeksforGeeks, and Codeforces",
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "test": "cd backend && npm test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "keywords": [
+    "coding-progress-tracker",
+    "leetcode",
+    "codechef",
+    "geeksforgeeks",
+    "codeforces"
+  ],
+  "author": "CodeTrack Team",
+  "license": "MIT"
+}
