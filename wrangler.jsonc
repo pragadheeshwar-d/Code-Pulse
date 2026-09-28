@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "codepulse",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-28",
+  "assets": {
+    "directory": "./frontend/dist",
+    "binding": "ASSETS"
+  }
+}
