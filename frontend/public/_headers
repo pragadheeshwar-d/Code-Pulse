@@ -1,0 +1,21 @@
+# Cloudflare Pages Production Headers
+
+# 1. Global Security Headers for all responses
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-XSS-Protection: 1; mode=block
+
+# 2. Immutable Cache for Static Fingerprinted Assets
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 3. HTML must never be aggressively cached to allow instant app updates
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate

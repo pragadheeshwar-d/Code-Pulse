@@ -8,6 +8,7 @@ export function initializeDatabase() {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT,
+      password_hash TEXT,
       headline TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -137,6 +138,16 @@ export function initializeDatabase() {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS platform_topics (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      platform TEXT NOT NULL,
+      topic TEXT NOT NULL,
+      problem_count INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      UNIQUE(user_id, platform, topic)
+    );
+
     -- Create Indexes for performance
     CREATE INDEX IF NOT EXISTS idx_platform_accounts_user ON platform_accounts(user_id);
     CREATE INDEX IF NOT EXISTS idx_stat_snapshots_platform ON stat_snapshots(platform_account_id, recorded_at);
@@ -144,7 +155,19 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_user_problems_solved ON user_problems(user_id, solved_at);
     CREATE INDEX IF NOT EXISTS idx_sync_logs_user ON sync_logs(user_id, started_at DESC);
     CREATE INDEX IF NOT EXISTS idx_contest_results_user ON contest_results(user_id);
+    CREATE INDEX IF NOT EXISTS idx_platform_topics_user ON platform_topics(user_id, platform);
   `);
+
+  // Ensure migrations / schema upgrades
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(users)').all() as Array<{ name: string }>;
+    const hasPasswordHash = tableInfo.some(col => col.name === 'password_hash');
+    if (!hasPasswordHash) {
+      db.exec('ALTER TABLE users ADD COLUMN password_hash TEXT;');
+    }
+  } catch (e) {
+    // Column might already exist
+  }
 
   // Ensure default user profile exists
   const user = db.prepare('SELECT id FROM users LIMIT 1').get();

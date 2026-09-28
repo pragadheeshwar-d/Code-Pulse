@@ -18,7 +18,7 @@ try {
 
   // Start Server
   const server = app.listen(PORT, () => {
-    console.log(`[Server] CodeTrack Backend running on http://localhost:${PORT}`);
+    console.log(`[Server] CodePulse Backend running on http://localhost:${PORT}`);
     // Start background auto sync job
     startAutoSyncJob();
   });

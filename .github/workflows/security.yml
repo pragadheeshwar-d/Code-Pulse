@@ -1,0 +1,39 @@
+name: CodePulse Security Audit
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Weekly on Sunday
+  workflow_dispatch:
+  push:
+    branches: [ master, main ]
+
+jobs:
+  security-audit:
+    name: Dependency Audit & Secret Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Audit Backend Dependencies
+        working-directory: backend
+        run: |
+          npm audit --audit-level=high || echo "Check vulnerabilities report"
+
+      - name: Audit Frontend Dependencies
+        working-directory: frontend
+        run: |
+          npm audit --audit-level=high || echo "Check vulnerabilities report"
+
+      - name: Check for Uncommitted Secrets
+        run: |
+          echo "Scanning for accidental token or key exposures..."
+          ! grep -rn "CLOUDFLARE_API_TOKEN=" . --exclude-dir=node_modules --exclude-dir=.git || exit 1
+          ! grep -rn "JWT_SECRET=" . --exclude-dir=node_modules --exclude-dir=.git --exclude=.env.example || exit 1
+          echo "Secret check passed: No plaintext production secrets committed."

@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { ConnectModal } from './components/ConnectModal';
 import { CreateGoalModal } from './components/CreateGoalModal';
 import { PlatformDetailModal } from './components/PlatformDetailModal';
+import { AuthModal } from './components/AuthModal';
 
 // Pages
 import { DashboardPage } from './pages/DashboardPage';
@@ -67,6 +68,12 @@ export const App: React.FC = () => {
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isPlatformDetailModalOpen, setIsPlatformDetailModalOpen] = useState(false);
   const [selectedDetailPlatform, setSelectedDetailPlatform] = useState<PlatformCardData | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await api.logout();
+    loadAllData();
+  };
 
   // Load all initial application data
   const loadAllData = useCallback(async () => {
@@ -89,7 +96,7 @@ export const App: React.FC = () => {
         api.getStatsHistory(chartPeriod).catch(() => []),
         api.getActivity(activityPlatform).catch(() => []),
         api.getGoals().catch(() => []),
-        api.getProblems(50).catch(() => []),
+        api.getProblems(500).catch(() => []),
         api.getContests().catch(() => []),
         api.getAnalytics().catch(() => null),
         api.getSyncLogs().catch(() => [])
@@ -205,6 +212,8 @@ export const App: React.FC = () => {
         onTabChange={setCurrentTab}
         user={user}
         lastSyncedText={getLastSyncedText()}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
@@ -331,6 +340,15 @@ export const App: React.FC = () => {
         platformData={selectedDetailPlatform}
         onSync={handleSyncPlatform}
         onDisconnect={handleDisconnectPlatform}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(newUser) => {
+          setUser(newUser);
+          loadAllData();
+        }}
       />
     </div>
   );

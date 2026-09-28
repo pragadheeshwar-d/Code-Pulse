@@ -1,158 +1,285 @@
-# CodeTrack — Personal Coding Analytics Dashboard
+# CodePulse — Personal Coding Analytics Dashboard
 
-> **Production-ready Coding Progress Tracker** aggregating, normalizing, and analyzing personal coding activity across **LeetCode**, **CodeChef**, **GeeksforGeeks**, and **Codeforces**.
+> **Track. Solve. Grow.**  
+> A production-ready coding progress aggregator and analytics platform that tracks, normalizes, and visualizes activity across **LeetCode**, **CodeChef**, **GeeksforGeeks**, and **Codeforces**.
+
+[![CodePulse CI Pipeline](https://github.com/your-username/codepulse/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/codepulse/actions/workflows/ci.yml)
+[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-F38020?logo=cloudflare&logoColor=white)](https://pages.cloudflare.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+---
+
+## Table of Contents
+1. [Project Overview](#1-project-overview)
+2. [Features](#2-features)
+3. [Architecture](#3-architecture)
+4. [Tech Stack](#4-tech-stack)
+5. [Local Development Setup](#5-local-development-setup)
+6. [Environment Variables](#6-environment-variables)
+7. [Database Setup & Migrations](#7-database-setup--migrations)
+8. [GitHub Actions CI/CD Workflows](#8-github-actions-cicd-workflows)
+9. [Cloudflare Deployment](#9-cloudflare-deployment)
+10. [REST API Documentation](#10-rest-api-documentation)
+11. [Security Information](#11-security-information)
+12. [Verification Suite](#12-verification-suite)
+13. [Rollback Strategy](#13-rollback-strategy)
 
 ---
 
 ## 1. Project Overview
 
-**CodeTrack** is a personal analytics dashboard for competitive programmers and software engineers. By connecting public platform usernames, CodeTrack continuously collects real activity data, normalizes it into a relational schema, records historical snapshots on every synchronization, and calculates streaks, progress, topic distributions, difficulty breakdowns, contest ratings, and factual insights.
+**CodePulse** aggregates authentic developer metrics across four leading competitive programming platforms into a unified developer dashboard. Users connect their accounts via public usernames (no third-party passwords required), while background workers synchronize activity, record historical snapshots, and generate actionable insights into problem-solving growth, difficulty distribution, DSA topic mastery, and contest ratings.
 
-### Absolute Rule — No Mock Data in Production
-* **Zero Hardcoded Numbers:** No hardcoded usernames, solved counts, ratings, ranks, or chart figures exist in the codebase.
-* **Pure Mathematical Derivation:** When accounts are unlinked, the application gracefully renders empty states (`—`, empty charts, helpful connection prompts). Every displayed metric is either directly collected from real platform sources or mathematically derived from stored historical records.
-* **Historical Snapshots:** Every synchronization creates immutable timestamped records, enabling genuine time-series growth tracking across 7 days, 30 days, 3 months, 6 months, 1 year, and all-time.
-
----
-
-## 2. Platform Collectors & Data Sources
-
-Each platform has an independent collector implementing a standardized interface (`fetchProfile`, `validateUsername`):
-
-| Platform | Data Source | Metrics Collected |
-| :--- | :--- | :--- |
-| **LeetCode** | Official Public GraphQL Endpoint (`https://leetcode.com/graphql`) | Total Solved, Easy/Medium/Hard Breakdown, Submissions, Calendar Streak, Total Active Days, Contest Rating, Global Ranking, Recent Accepted Submissions, DSA Skill Tags |
-| **Codeforces** | Official REST API (`https://codeforces.com/api/*`) | User Info, Max Rating, Current Rating, Rank Title, Submissions History, Problem Tags (Topics), Difficulty Ratings, Contest History & Rating Deltas |
-| **CodeChef** | Public Profile Scraper (`https://www.codechef.com/users/*`) | Current Rating, Stars, Division, Global Rank, Total Solved Problems, Contest Rating History (`var all_rating`), Recent Problems |
-| **GeeksforGeeks** | Next.js Streaming Payload (`https://www.geeksforgeeks.org/profile/*`) | Total Solved Problems, Coding Score, Institute Rank, Problem of the Day (POTD) Streaks, Correct Submissions Count |
+### Guiding Principles
+* **Zero Mock / Synthetic Data**: Every metric displayed in the dashboard is either retrieved from live public platform APIs or calculated from stored historical snapshots.
+* **True Continuous Time-Scale**: Growth charts maintain true daily cumulative baselines across all timeframes (7D, 30D, 3M, 6M, 1Y, All).
+* **Multi-User Ready**: Native password hashing (`bcryptjs`) and JWT session security with multi-user relational database isolation.
 
 ---
 
-## 3. System Architecture & Data Flow
+## 2. Features
 
-```
-                      +---------------------------------------+
-                      |         Application User              |
-                      +-------------------+-------------------+
-                                          |
-                        Enters Platform Usernames
-                                          v
-                      +---------------------------------------+
-                      |       Platform Collectors             |
-                      |  (LeetCode, CF, CodeChef, GFG)        |
-                      +-------------------+-------------------+
-                                          |
-                             Real Platform Payloads
-                                          v
-                      +---------------------------------------+
-                      |    Normalization & Validation Layer   |
-                      |        (Zod Schemas & Mappers)        |
-                      +-------------------+-------------------+
-                                          |
-                               Relational Persistence
-                                          v
-                      +---------------------------------------+
-                      |      SQLite Database Engine           |
-                      |  (node:sqlite WAL Mode + Snapshots)   |
-                      +-------------------+-------------------+
-                                          |
-                             Derived Analytics Engine
-                                          v
-                      +---------------------------------------+
-                      |      REST API Layer (Express)         |
-                      |   /api/stats, /api/activity, etc.     |
-                      +-------------------+-------------------+
-                                          |
-                              JSON Response Payloads
-                                          v
-                      +---------------------------------------+
-                      |      React Dashboard Frontend         |
-                      |   (Vite, Tailwind CSS, Recharts)      |
-                      +---------------------------------------+
+* **Unified Problem Catalog**: Centralizes 2,120+ solved problems with normalized difficulty ratings (Easy, Medium, Hard).
+* **Streak & Activity Heatmap**: Accurate submission streak calculation (119-day longest streak, active days, and GitHub-style submission matrix).
+* **DSA Topic Distribution**: Topic breakdown mapping across 16 core DSA categories (Arrays, Strings, Math, Greedy, Sorting, DP, Trees, Graphs, etc.).
+* **Contest Tracking & Rating Deltas**: Historical rating tracking for Codeforces, CodeChef divisions, and LeetCode contest rankings.
+* **Goal Setting & Milestones**: Custom target tracking for solved problems, active days, or contest ratings.
+* **Sleek Dark UI**: High-contrast, responsive dashboard built with Tailwind CSS and Recharts.
+
+---
+
+## 3. Architecture
+
+```text
+                    ┌──────────────────────────────┐
+                    │       GitHub Repository      │
+                    │   Source Code & Workflows    │
+                    └──────────────┬───────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │    GitHub Actions (CI/CD)    │
+                    │ Build, Test, Security, Deploy│
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼───────────────┐
+                    │       Cloudflare CDN         │
+                    │ DNS • SSL/TLS • Edge Caching │
+                    │ Security Headers • DDoS Prot │
+                    └──────────────┬───────────────┘
+                                   │
+            ┌──────────────────────┴──────────────────────┐
+            ▼                                             ▼
+┌──────────────────────────────┐            ┌──────────────────────────────┐
+│  Cloudflare Pages (Frontend) │            │   Production Backend API     │
+│   • Vite + React 18 + TS     │            │   • Node.js 22+ / Express    │
+│   • Tailwind CSS             │            │   • Helmet & Rate Limiting   │
+│   • Recharts & Lucide        │            │   • JWT Auth & bcryptjs      │
+│   • _headers & _redirects    │            │   • Periodic Cron Sync       │
+└──────────────┬───────────────┘            └──────────────┬───────────────┘
+               │                                           │
+               │         /api/* Proxy (CORS-Safe)          │
+               └───────────────────────────────────────────┤
+                                                           ▼
+                                            ┌──────────────────────────────┐
+                                            │      Production Database     │
+                                            │   • SQLite with WAL mode     │
+                                            │   • Relational Foreign Keys  │
+                                            │   • Performance Indexes      │
+                                            └──────────────────────────────┘
 ```
 
 ---
 
-## 4. Database Entities
+## 4. Tech Stack
 
-The relational database uses Node's standard `node:sqlite` engine configured with Write-Ahead Logging (WAL) and foreign keys:
-
-* `users`: Application user profile (Name, Headline, Email, Timestamps)
-* `platform_accounts`: Connected platform credentials, profile links, connection status, last synced timestamps
-* `problems`: Master directory of problems solved across platforms (External ID, Slug, URL, Difficulty, Topic)
-* `user_problems`: Relational mapping of user solutions and first-seen timestamps
-* `stat_snapshots`: Mandatory timestamped snapshots created on every sync (Solved counts, Ratings, Streaks, Submissions)
-* `activity_records`: Daily activity log (`activity_date`, `problems_solved`, `submissions`, `rating_change`)
-* `goals`: Measurable targets with mathematical progress calculation (`actual / target * 100`)
-* `contests`: Contest directories (LeetCode Weekly, Codeforces Rounds, CodeChef Cook-Offs)
-* `contest_results`: User contest performance (Ranks, Old Rating, New Rating, Rating Deltas)
-* `sync_logs`: Structured synchronization audit log (Started at, Completed at, Records processed, Status, Error message)
-* `user_settings`: Auto-sync intervals (`6h`, `12h`, `24h`, `manual`), theme preferences
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Recharts, Lucide Icons |
+| **Backend API** | Node.js 22+, Express, TypeScript, Zod, Helmet, Express-Rate-Limit |
+| **Authentication** | JSON Web Tokens (`jsonwebtoken`), Password Hashing (`bcryptjs`) |
+| **Database** | SQLite via native `node:sqlite`, WAL mode, Foreign Keys, Performance Indexes |
+| **Infrastructure** | Cloudflare Pages, Cloudflare DNS, Cloudflare SSL/TLS, GitHub Actions |
 
 ---
 
-## 5. Technology Stack
-
-* **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, Lucide React, Recharts
-* **Backend:** Node.js v22+, Express, TypeScript, Zod, node-cron
-* **Database:** SQLite via built-in `node:sqlite` (DatabaseSync, WAL mode, zero external binary compilation dependencies)
-* **Testing:** Vitest (Unit tests for streak calculation, goal progress, difficulty aggregations, and integration tests for API endpoints)
-
----
-
-## 6. Installation & Local Setup
+## 5. Local Development Setup
 
 ### Prerequisites
-* Node.js v22.5.0 or later (Node 24 supported)
-* npm v10+
+* Node.js v22 or higher
+* npm v10 or higher
 
-### Step 1: Clone and install dependencies
+### Installation
 ```bash
-git clone <repository_url>
-cd "Progress Tracker"
+# Clone the repository
+git clone https://github.com/your-username/codepulse.git
+cd codepulse
 
-# Install root, backend, and frontend dependencies
+# Install dependencies across all workspaces
 npm run install:all
-```
 
-### Step 2: Start the application
-```bash
-# Starts both Backend (port 5000) and Frontend (port 5173) concurrently
+# Run database migrations
+npm run migrate
+
+# Start backend & frontend concurrently in development mode
 npm run dev
 ```
 
-The frontend will be accessible at: `http://localhost:5173`
-The backend API will be accessible at: `http://localhost:5000/api`
+* **Frontend**: `http://localhost:5173`
+* **Backend API**: `http://localhost:5000`
+* **Health Check**: `http://localhost:5000/health`
 
 ---
 
-## 7. Running Tests
+## 6. Environment Variables
 
-Run the test suite via Vitest:
+Create `.env` files in root and subdirectories based on `.env.example`:
 
-```bash
-npm run test
+```env
+# Server Runtime
+NODE_ENV=production
+PORT=5000
+
+# Database
+DATABASE_PATH=./data/codetrack.sqlite
+
+# Security & Authentication
+JWT_SECRET=generate_a_secure_random_key_min_32_characters
+
+# CORS & Domain Routing
+FRONTEND_URL=https://codepulse.yourdomain.com
+BACKEND_URL=https://api.yourdomain.com
+CORS_ORIGIN=https://codepulse.yourdomain.com
+
+# GitHub Integration (Optional)
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_USERNAME=
 ```
 
-### Test Coverage includes:
-1. **Streak Calculation Engine:** Verifies consecutive date sequences, streak preservation, and streak resets when inactive.
-2. **Dynamic Goal Engine:** Verifies mathematical calculation of progress percentages (`progress = current / target * 100`) and automatic status transitions (`active` -> `completed` / `expired`).
-3. **Difficulty Aggregation:** Verifies proportional calculations across multi-platform snapshots.
-4. **Empty State Integrity:** Ensures `has_data: false`, null values, and clean empty states when no accounts are connected.
-5. **REST API Endpoints:** Validates health checks, platform connectivity, input validation, and goal CRUD operations.
+---
+
+## 7. Database Setup & Migrations
+
+Database files are stored in `data/` using SQLite Write-Ahead Logging (`WAL`).
+
+```bash
+# Execute migration runner
+npm run migrate
+
+# Run database backup snapshot (Windows PowerShell)
+.\database\backup.ps1
+
+# Run database backup snapshot (Linux/macOS)
+./database/backup.sh
+```
 
 ---
 
-## 8. Automatic & Manual Synchronization
+## 8. GitHub Actions CI/CD Workflows
 
-* **Sync Now:** Header button triggers an isolated sequential sync across all connected platforms. If one platform's public profile is momentarily unreachable, the remaining platforms proceed uninterrupted.
-* **Scheduled Auto-Sync:** A background cron runner periodically triggers synchronization according to user preferences (`6h`, `12h`, `24h`, or `manual`).
-* **Concurrency Locking:** In-memory job locks ensure duplicate sync requests for the same user and platform do not run concurrently.
+The repository contains three GitHub Actions workflows in `.github/workflows/`:
+
+1. **`ci.yml`**: Triggers on PR and push to `main`/`master`. Installs dependencies, runs migrations, executes Vitest unit/integration tests, compiles TypeScript, and builds frontend distribution bundles.
+2. **`deploy.yml`**: Builds and deploys frontend distribution to Cloudflare Pages and dispatches deployment triggers to the backend host.
+3. **`security.yml`**: Scheduled weekly audit for dependencies and secret leak detection.
 
 ---
 
-## 9. Security & Privacy
+## 9. Cloudflare Deployment
 
-* **Zero Password Requirement:** CodeTrack only requires public handles/usernames. Passwords, session cookies, and private tokens are never requested or stored.
-* **Safe Error Handling:** Platform failures are logged with sanitized error messages.
-* **Input Sanitization:** All incoming requests are strictly validated using Zod schemas before touching the database.
+### Frontend (Cloudflare Pages)
+1. In Cloudflare Dashboard, navigate to **Workers & Pages** -> **Create application** -> **Pages** -> **Connect to Git**.
+2. Select repository `codepulse`.
+3. Set build configuration:
+   * **Framework preset**: `Vite`
+   * **Root directory**: `frontend`
+   * **Build command**: `npm run build`
+   * **Build output directory**: `dist`
+4. Set Environment Variable: `VITE_API_URL` to `https://api.yourdomain.com/api` (or rely on `_redirects` proxy).
+5. Click **Save and Deploy**.
+
+### Cloudflare DNS & SSL Settings
+* **Frontend**: CNAME `codepulse` -> `<project>.pages.dev` (Proxied - Orange Cloud).
+* **API**: CNAME `api.codepulse` -> `<backend-host>` (Proxied - Orange Cloud).
+* **SSL Mode**: **Full (strict)** with **Always Use HTTPS** enabled.
+
+---
+
+## 10. REST API Documentation
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Server health, uptime, and version status |
+| `POST` | `/api/auth/register` | Register new user account with hashed password |
+| `POST` | `/api/auth/login` | Authenticate and obtain JWT token |
+| `GET` | `/api/auth/me` | Fetch active authenticated user profile |
+| `GET` | `/api/profile` | Retrieve user profile & settings |
+| `PATCH` | `/api/profile` | Update profile information and UI preferences |
+| `GET` | `/api/platforms` | List connected coding platforms with live stats |
+| `POST` | `/api/platforms/connect` | Connect a platform by username |
+| `DELETE` | `/api/platforms/:platform` | Disconnect platform account |
+| `POST` | `/api/sync` | Trigger synchronization across all platforms |
+| `GET` | `/api/stats` | High-level summary metrics |
+| `GET` | `/api/stats/history` | Continuous time-series progression data |
+| `GET` | `/api/problems` | List tracked problems across platforms |
+| `GET` | `/api/activity` | Heatmap daily activity frequencies |
+| `GET` | `/api/goals` | Active and completed goals |
+| `POST` | `/api/goals` | Create new target goal |
+| `GET` | `/api/contests` | Historical contest participations and rating changes |
+| `GET` | `/api/analytics` | Difficulty breakdown and DSA topic distribution |
+| `GET` | `/api/streaks` | Direct streak & consistency metrics |
+| `GET` | `/api/progress` | Growth timeline & distribution |
+| `GET` | `/api/leetcode` | Direct LeetCode platform statistics |
+| `GET` | `/api/codechef` | Direct CodeChef platform statistics |
+| `GET` | `/api/gfg` | Direct GeeksforGeeks platform statistics |
+| `GET` | `/api/codeforces` | Direct Codeforces platform statistics |
+| `GET` | `/api/github` | Public GitHub profile activity & OAuth status |
+
+---
+
+## 11. Security Information
+
+* **Authentication**: Password encryption via `bcryptjs` (salt factor 10) + JWT Bearer token sessions.
+* **Rate Limiting**: Protects against brute-force logins (30 req / 15 min on `/api/auth`) and API abuse (600 req / 15 min).
+* **Security Headers**: Configured via `helmet` and Cloudflare `_headers` (HSTS, X-Frame-Options: DENY, X-Content-Type-Options: nosniff).
+* **Safe Platform Connections**: Third-party passwords are never collected; all platform collectors use public profiles and public APIs.
+* **CORS**: Restricted strictly to authorized frontend origins.
+
+---
+
+## 12. Verification Suite
+
+Run the automated verification suite to validate all 18 production criteria:
+```bash
+npm run verify
+```
+
+Validates:
+* Root `/health` and `/api/health` 200 OK responses
+* Helmet security headers (`X-Content-Type-Options`, `X-Frame-Options`)
+* User registration, password hashing, and login authentication
+* JWT Bearer token validation on protected endpoints
+* Live platform statistics and zero-mock problem totals (2,120 problems)
+* Dedicated domain endpoints (`/streaks`, `/progress`, `/leetcode`, `/codechef`, `/gfg`, `/codeforces`, `/github`)
+
+---
+
+## 13. Rollback Strategy
+
+1. **Frontend Rollback**:
+   * In Cloudflare Dashboard -> **Workers & Pages** -> **codepulse** -> **Deployments**.
+   * Locate the last known healthy deployment and click **Rollback to this deployment**.
+2. **Database Rollback**:
+   * Restore previous backup snapshot from `database/backups/`:
+     ```powershell
+     Copy-Item database\backups\codepulse_backup_<timestamp>.sqlite data\codetrack.sqlite -Force
+     ```
+3. **Backend Rollback**:
+   * In your hosting dashboard (e.g. Render / Railway), click **Rollback to previous commit**.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

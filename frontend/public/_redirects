@@ -1,0 +1,9 @@
+# Cloudflare Pages Routing Rules
+
+# Optional API proxy: If you deploy your backend to Render/Railway/Fly.io/VPS,
+# uncomment the line below and replace with your backend URL to proxy /api requests
+# without CORS:
+# /api/*  https://your-backend-service.onrender.com/api/:splat  200
+
+# Single Page Application (SPA) routing fallback
+/*  /index.html  200

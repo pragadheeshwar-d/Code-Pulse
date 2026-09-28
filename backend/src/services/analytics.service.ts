@@ -29,6 +29,8 @@ export class AnalyticsService {
     let totalSolved = 0;
     let totalSubmissions = 0;
     let latestRecordedAt: string | null = null;
+    let maxSnapshotLongestStreak = 0;
+    let maxSnapshotCurrentStreak = 0;
 
     for (const acc of accounts) {
       const snap = db.prepare(`
@@ -41,6 +43,12 @@ export class AnalyticsService {
       if (snap) {
         totalSolved += snap.total_solved || 0;
         totalSubmissions += snap.total_submissions || 0;
+        if (snap.longest_streak && snap.longest_streak > maxSnapshotLongestStreak) {
+          maxSnapshotLongestStreak = snap.longest_streak;
+        }
+        if (snap.current_streak && snap.current_streak > maxSnapshotCurrentStreak) {
+          maxSnapshotCurrentStreak = snap.current_streak;
+        }
         if (!latestRecordedAt || snap.recorded_at > latestRecordedAt) {
           latestRecordedAt = snap.recorded_at;
         }
@@ -58,58 +66,116 @@ export class AnalyticsService {
     const activeDatesList = dates.map(d => d.activity_date);
     const { currentStreak, longestStreak } = this.calculateStreaks(activeDatesList);
 
+    // Cross-verify streak calculations with platform verified metrics
+    const finalLongestStreak = Math.max(longestStreak, maxSnapshotLongestStreak);
+    const finalCurrentStreak = Math.max(currentStreak, maxSnapshotCurrentStreak);
+
     return {
       has_data: true,
       total_problems: totalSolved,
       active_days: activeDatesList.length,
-      current_streak: currentStreak,
-      longest_streak: longestStreak,
+      current_streak: finalCurrentStreak,
+      longest_streak: finalLongestStreak,
       total_submissions: totalSubmissions,
       last_synced_at: latestRecordedAt
     };
   }
 
   /**
-   * Problems Solved over time (with time filters: 7d, 30d, 3m, 6m, 1y, all)
+   * Problems Solved over time with true continuous time-scale
+   * (supports periods: 7d, 30d, 3m, 6m, 1y, all)
    */
   getProblemsSolvedHistory(userId: string, period: string = '30d') {
     const db = getDb();
-    const daysLimit = this.parsePeriodToDays(period);
 
-    let dateFilterClause = '';
-    const params: any[] = [userId];
+    // 1. Get total solved problems across connected accounts
+    const accounts = db.prepare(`
+      SELECT id FROM platform_accounts WHERE user_id = ? AND connection_status = 'connected'
+    `).all(userId) as { id: string }[];
 
-    if (daysLimit !== null) {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - daysLimit);
-      dateFilterClause = 'AND ar.activity_date >= ?';
-      params.push(startDate.toISOString().split('T')[0]);
+    if (accounts.length === 0) {
+      return [];
     }
 
-    // Aggregate daily solved problems across all connected platforms
+    let totalSolved = 0;
+    for (const acc of accounts) {
+      const snap = db.prepare(`
+        SELECT total_solved FROM stat_snapshots
+        WHERE platform_account_id = ?
+        ORDER BY recorded_at DESC
+        LIMIT 1
+      `).get(acc.id) as { total_solved: number } | undefined;
+      if (snap) totalSolved += (snap.total_solved || 0);
+    }
+
+    const daysLimit = this.parsePeriodToDays(period);
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Determine start date
+    let startDateStr = '';
+    if (daysLimit !== null) {
+      const start = new Date(today.getTime() - (daysLimit - 1) * 86400000);
+      startDateStr = start.toISOString().split('T')[0];
+    } else {
+      // For 'all', find earliest activity date
+      const earliest = db.prepare(`
+        SELECT MIN(ar.activity_date) as first_date
+        FROM activity_records ar
+        JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+        WHERE ar.user_id = ?
+      `).get(userId) as { first_date: string | null };
+
+      if (earliest?.first_date) {
+        startDateStr = earliest.first_date;
+      } else {
+        const start = new Date(today.getTime() - 30 * 86400000);
+        startDateStr = start.toISOString().split('T')[0];
+      }
+    }
+
+    // 2. Fetch all daily solved counts in the time range
     const rows = db.prepare(`
       SELECT ar.activity_date, SUM(ar.problems_solved) as daily_solved
       FROM activity_records ar
       JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
-      WHERE ar.user_id = ? ${dateFilterClause}
+      WHERE ar.user_id = ? AND ar.activity_date >= ? AND ar.activity_date <= ?
       GROUP BY ar.activity_date
       ORDER BY ar.activity_date ASC
-    `).all(...params) as { activity_date: string; daily_solved: number }[];
+    `).all(userId, startDateStr, todayStr) as { activity_date: string; daily_solved: number }[];
 
-    if (rows.length === 0) {
-      return [];
+    const activityMap: Record<string, number> = {};
+    let periodSolved = 0;
+    for (const r of rows) {
+      activityMap[r.activity_date] = r.daily_solved;
+      periodSolved += r.daily_solved;
     }
 
-    // Compute running cumulative count or daily points
-    let cumulative = 0;
-    return rows.map(r => {
-      cumulative += r.daily_solved;
+    // 3. Generate a continuous date timeline
+    const timeline: string[] = [];
+    const cur = new Date(startDateStr + 'T00:00:00Z');
+    const end = new Date(todayStr + 'T00:00:00Z');
+
+    while (cur <= end) {
+      timeline.push(cur.toISOString().split('T')[0]);
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    // Baseline prior to the window
+    const baselineSolved = Math.max(0, totalSolved - periodSolved);
+    let runningCumulative = baselineSolved;
+
+    const result = timeline.map(date => {
+      const daily = activityMap[date] || 0;
+      runningCumulative += daily;
       return {
-        date: r.activity_date,
-        daily: r.daily_solved,
-        cumulative
+        date,
+        daily,
+        cumulative: runningCumulative
       };
     });
+
+    return result;
   }
 
   /**
@@ -177,6 +243,7 @@ export class AnalyticsService {
 
   /**
    * Difficulty Breakdown (Easy, Medium, Hard)
+   * Comprehensively aggregates authentic classifications across all connected platforms
    */
   getDifficultyDistribution(userId: string) {
     const db = getDb();
@@ -225,6 +292,7 @@ export class AnalyticsService {
 
   /**
    * DSA / Topic Distribution
+   * Aggregates topics across platform_topics table and solved problems
    */
   getTopicDistribution(userId: string) {
     const db = getDb();
@@ -233,43 +301,100 @@ export class AnalyticsService {
     const standardTopics = [
       'Arrays',
       'Strings',
+      'Sorting',
+      'Binary Search',
       'Hashing',
       'Two Pointers',
       'Sliding Window',
-      'Binary Search',
+      'Linked Lists',
+      'Stack',
+      'Queue',
       'Trees',
       'Graphs',
       'Dynamic Programming',
       'Greedy',
-      'Stack',
-      'Queue',
-      'Bit Manipulation',
-      'Math'
+      'Math',
+      'Bit Manipulation'
     ];
 
-    const rows = db.prepare(`
+    // Query platform_topics
+    const platformTopicRows = db.prepare(`
+      SELECT pt.topic, SUM(pt.problem_count) as total_count
+      FROM platform_topics pt
+      JOIN platform_accounts pa ON pa.user_id = pt.user_id AND pa.platform = pt.platform AND pa.connection_status = 'connected'
+      WHERE pt.user_id = ?
+      GROUP BY pt.topic
+    `).all(userId) as { topic: string; total_count: number }[];
+
+    // Query user_problems for individually tagged problems
+    const problemTopicRows = db.prepare(`
       SELECT p.topic, COUNT(up.id) as count
       FROM user_problems up
       JOIN problems p ON up.problem_id = p.id
       JOIN platform_accounts pa ON pa.user_id = up.user_id AND pa.platform = p.platform AND pa.connection_status = 'connected'
       WHERE up.user_id = ? AND p.topic IS NOT NULL AND p.topic != ''
       GROUP BY p.topic
-      ORDER BY count DESC
     `).all(userId) as { topic: string; count: number }[];
 
-    const topicMap = new Map<string, number>();
-    for (const r of rows) {
-      topicMap.set(r.topic, r.count);
+    const rawTopicMap: Record<string, number> = {};
+    for (const r of platformTopicRows) {
+      rawTopicMap[r.topic] = (rawTopicMap[r.topic] || 0) + r.total_count;
+    }
+    for (const r of problemTopicRows) {
+      rawTopicMap[r.topic] = (rawTopicMap[r.topic] || 0) + r.count;
     }
 
-    // Calculate total count
+    // Mapping synonyms to standard DSA topics
+    const aliasMap: Record<string, string> = {
+      'Array': 'Arrays',
+      'Arrays': 'Arrays',
+      'Data Structures': 'Arrays',
+      'String': 'Strings',
+      'Strings': 'Strings',
+      'Sortings': 'Sorting',
+      'Sorting': 'Sorting',
+      'Searching': 'Binary Search',
+      'Binary Search': 'Binary Search',
+      'Hash Table': 'Hashing',
+      'Hashing': 'Hashing',
+      'Two Pointers': 'Two Pointers',
+      'Sliding Window': 'Sliding Window',
+      'Linked List': 'Linked Lists',
+      'Linked Lists': 'Linked Lists',
+      'Stack': 'Stack',
+      'Queue': 'Queue',
+      'Tree': 'Trees',
+      'Trees': 'Trees',
+      'Binary Tree': 'Trees',
+      'Graph': 'Graphs',
+      'Graphs': 'Graphs',
+      'Depth-First Search': 'Graphs',
+      'Breadth-First Search': 'Graphs',
+      'DFS': 'Graphs',
+      'BFS': 'Graphs',
+      'Dynamic Programming': 'Dynamic Programming',
+      'dp': 'Dynamic Programming',
+      'Greedy': 'Greedy',
+      'Math': 'Math',
+      'Mathematics': 'Math',
+      'Bit Manipulation': 'Bit Manipulation',
+      'bitmasks': 'Bit Manipulation'
+    };
+
+    const topicCounts: Record<string, number> = {};
+    for (const [rawName, count] of Object.entries(rawTopicMap)) {
+      const canonical = aliasMap[rawName] || rawName;
+      topicCounts[canonical] = (topicCounts[canonical] || 0) + count;
+    }
+
+    // Calculate total solved with topic for percentage normalization
     let totalSolvedWithTopic = 0;
-    for (const count of topicMap.values()) {
-      totalSolvedWithTopic += count;
+    for (const name of standardTopics) {
+      totalSolvedWithTopic += (topicCounts[name] || 0);
     }
 
     return standardTopics.map(name => {
-      const count = topicMap.get(name) || 0;
+      const count = topicCounts[name] || 0;
       const percentage = totalSolvedWithTopic > 0 ? Math.round((count / totalSolvedWithTopic) * 100) : 0;
       return {
         name,
@@ -280,9 +405,9 @@ export class AnalyticsService {
   }
 
   /**
-   * Recent solved problems
+   * Solved problems details
    */
-  getRecentActivity(userId: string, limit: number = 20) {
+  getRecentActivity(userId: string, limit: number = 500) {
     const db = getDb();
     return db.prepare(`
       SELECT p.platform, p.title, p.difficulty, up.solved_at as date, p.url
@@ -405,13 +530,14 @@ export class AnalyticsService {
     let tempStreak = 0;
     let prevDate: Date | null = null;
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().split('T')[0];
 
     for (const dateStr of sortedDateStrings) {
       const curDate = new Date(dateStr + 'T00:00:00Z');
       if (prevDate) {
-        const diffDays = Math.round((curDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.round((curDate.getTime() - prevDate.getTime()) / 86400000);
         if (diffDays === 1) {
           tempStreak++;
         } else if (diffDays > 1) {

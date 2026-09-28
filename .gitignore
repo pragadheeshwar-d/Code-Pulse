@@ -1,6 +1,56 @@
+# CodePulse Root .gitignore
+
+# Dependencies
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Production Build Outputs
 dist/
-data/
-*.log
+build/
+out/
+.next/
+*.tsbuildinfo
+
+# Environment & Secrets (NEVER COMMIT)
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+.env.*
+*.pem
+*.key
+*.cert
+
+# Database Storage & Local Files
+data/
+database/backups/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+
+# OS & Editor
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# Logs & Temporary Files
+*.log
+logs/
+.tmp/
+tmp/
+coverage/
+.nyc_output/
+__pycache__/

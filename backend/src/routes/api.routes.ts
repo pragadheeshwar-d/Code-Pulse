@@ -7,22 +7,26 @@ import { GoalService } from '../services/goal.service.js';
 import { getDb } from '../db/database.js';
 import { PlatformType } from '../types/index.js';
 
+import { AuthenticatedRequest, resolveAuth, DEFAULT_USER_ID } from '../middleware/auth.middleware.js';
+
 const router = Router();
 const platformService = new PlatformService();
 const syncService = new SyncService();
 const analyticsService = new AnalyticsService();
 const goalService = new GoalService();
 
-// Middleware to resolve active user (default single-user mode for desktop/local dashboard)
-const DEFAULT_USER_ID = 'user_default';
+// Resolve active user (Bearer JWT if present, or user_default)
+router.use(resolveAuth);
+const getUserId = (req: Request): string => (req as AuthenticatedRequest).userId || DEFAULT_USER_ID;
 
 /**
  * GET /api/profile
  */
 router.get('/profile', (req: Request, res: Response) => {
+  const userId = getUserId(req);
   const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(DEFAULT_USER_ID);
-  const settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(DEFAULT_USER_ID);
+  const user = db.prepare('SELECT id, name, email, headline, created_at, updated_at FROM users WHERE id = ?').get(userId);
+  const settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId);
   res.json({ success: true, data: { user, settings } });
 });
 
@@ -30,6 +34,7 @@ router.get('/profile', (req: Request, res: Response) => {
  * PATCH /api/profile
  */
 router.patch('/profile', (req: Request, res: Response) => {
+  const userId = getUserId(req);
   const { name, headline, email, auto_sync_interval, theme } = req.body;
   const db = getDb();
   const now = new Date().toISOString();
@@ -42,7 +47,7 @@ router.patch('/profile', (req: Request, res: Response) => {
           email = COALESCE(?, email),
           updated_at = ?
       WHERE id = ?
-    `).run(name || null, headline || null, email || null, now, DEFAULT_USER_ID);
+    `).run(name || null, headline || null, email || null, now, userId);
   }
 
   if (auto_sync_interval || theme) {
@@ -52,11 +57,11 @@ router.patch('/profile', (req: Request, res: Response) => {
           theme = COALESCE(?, theme),
           updated_at = ?
       WHERE user_id = ?
-    `).run(auto_sync_interval || null, theme || null, now, DEFAULT_USER_ID);
+    `).run(auto_sync_interval || null, theme || null, now, userId);
   }
 
-  const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(DEFAULT_USER_ID);
-  const updatedSettings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(DEFAULT_USER_ID);
+  const updatedUser = db.prepare('SELECT id, name, email, headline, created_at, updated_at FROM users WHERE id = ?').get(userId);
+  const updatedSettings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId);
 
   res.json({ success: true, data: { user: updatedUser, settings: updatedSettings } });
 });
@@ -66,7 +71,8 @@ router.patch('/profile', (req: Request, res: Response) => {
  */
 router.get('/platforms', async (req: Request, res: Response) => {
   try {
-    const platforms = await platformService.getPlatformAccountsWithStats(DEFAULT_USER_ID);
+    const userId = getUserId(req);
+    const platforms = await platformService.getPlatformAccountsWithStats(userId);
     res.json({ success: true, data: platforms });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -83,8 +89,9 @@ const ConnectSchema = z.object({
 
 router.post('/platforms/connect', async (req: Request, res: Response) => {
   try {
+    const userId = getUserId(req);
     const validated = ConnectSchema.parse(req.body);
-    const result = await platformService.connectPlatform(DEFAULT_USER_ID, validated.platform, validated.username);
+    const result = await platformService.connectPlatform(userId, validated.platform, validated.username);
     res.json({ success: true, data: result });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
@@ -96,8 +103,9 @@ router.post('/platforms/connect', async (req: Request, res: Response) => {
  */
 router.delete('/platforms/:platform', async (req: Request, res: Response) => {
   try {
+    const userId = getUserId(req);
     const platform = req.params.platform as PlatformType;
-    const removed = await platformService.disconnectPlatform(DEFAULT_USER_ID, platform);
+    const removed = await platformService.disconnectPlatform(userId, platform);
     res.json({ success: true, data: { removed } });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -109,7 +117,7 @@ router.delete('/platforms/:platform', async (req: Request, res: Response) => {
  */
 router.post('/sync', async (req: Request, res: Response) => {
   try {
-    const results = await syncService.syncAll(DEFAULT_USER_ID);
+    const results = await syncService.syncAll(getUserId(req));
     res.json({ success: true, data: results });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -122,7 +130,7 @@ router.post('/sync', async (req: Request, res: Response) => {
 router.post('/sync/:platform', async (req: Request, res: Response) => {
   try {
     const platform = req.params.platform as PlatformType;
-    const result = await syncService.syncPlatform(DEFAULT_USER_ID, platform);
+    const result = await syncService.syncPlatform(getUserId(req), platform);
     if (!result.success) {
       res.status(400).json({ success: false, error: result.error });
       return;
@@ -138,7 +146,7 @@ router.post('/sync/:platform', async (req: Request, res: Response) => {
  */
 router.get('/stats', (req: Request, res: Response) => {
   try {
-    const overview = analyticsService.getDashboardOverview(DEFAULT_USER_ID);
+    const overview = analyticsService.getDashboardOverview(getUserId(req));
     res.json({ success: true, data: overview });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -151,7 +159,7 @@ router.get('/stats', (req: Request, res: Response) => {
 router.get('/stats/history', (req: Request, res: Response) => {
   try {
     const period = (req.query.period as string) || '30d';
-    const history = analyticsService.getProblemsSolvedHistory(DEFAULT_USER_ID, period);
+    const history = analyticsService.getProblemsSolvedHistory(getUserId(req), period);
     res.json({ success: true, data: history });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -164,7 +172,7 @@ router.get('/stats/history', (req: Request, res: Response) => {
 router.get('/problems', (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string, 10) || 50;
-    const problems = analyticsService.getRecentActivity(DEFAULT_USER_ID, limit);
+    const problems = analyticsService.getRecentActivity(getUserId(req), limit);
     res.json({ success: true, data: problems });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -177,7 +185,7 @@ router.get('/problems', (req: Request, res: Response) => {
 router.get('/activity', (req: Request, res: Response) => {
   try {
     const platform = req.query.platform as string | undefined;
-    const activity = analyticsService.getCodingActivity(DEFAULT_USER_ID, platform);
+    const activity = analyticsService.getCodingActivity(getUserId(req), platform);
     res.json({ success: true, data: activity });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -189,7 +197,7 @@ router.get('/activity', (req: Request, res: Response) => {
  */
 router.get('/goals', (req: Request, res: Response) => {
   try {
-    const goals = goalService.getGoals(DEFAULT_USER_ID);
+    const goals = goalService.getGoals(getUserId(req));
     res.json({ success: true, data: goals });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -211,7 +219,7 @@ const GoalSchema = z.object({
 router.post('/goals', (req: Request, res: Response) => {
   try {
     const validated = GoalSchema.parse(req.body);
-    const created = goalService.createGoal(DEFAULT_USER_ID, validated);
+    const created = goalService.createGoal(getUserId(req), validated);
     res.json({ success: true, data: created });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
@@ -223,7 +231,7 @@ router.post('/goals', (req: Request, res: Response) => {
  */
 router.delete('/goals/:id', (req: Request, res: Response) => {
   try {
-    const deleted = goalService.deleteGoal(DEFAULT_USER_ID, req.params.id);
+    const deleted = goalService.deleteGoal(getUserId(req), req.params.id);
     res.json({ success: true, data: { deleted } });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -235,7 +243,7 @@ router.delete('/goals/:id', (req: Request, res: Response) => {
  */
 router.get('/contests', (req: Request, res: Response) => {
   try {
-    const contests = analyticsService.getContests(DEFAULT_USER_ID);
+    const contests = analyticsService.getContests(getUserId(req));
     res.json({ success: true, data: contests });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -247,9 +255,9 @@ router.get('/contests', (req: Request, res: Response) => {
  */
 router.get('/analytics', (req: Request, res: Response) => {
   try {
-    const difficulty = analyticsService.getDifficultyDistribution(DEFAULT_USER_ID);
-    const topics = analyticsService.getTopicDistribution(DEFAULT_USER_ID);
-    const insights = analyticsService.getSmartInsights(DEFAULT_USER_ID);
+    const difficulty = analyticsService.getDifficultyDistribution(getUserId(req));
+    const topics = analyticsService.getTopicDistribution(getUserId(req));
+    const insights = analyticsService.getSmartInsights(getUserId(req));
 
     res.json({
       success: true,
@@ -272,7 +280,7 @@ router.get('/sync-logs', (req: Request, res: Response) => {
     const db = getDb();
     const logs = db.prepare(`
       SELECT * FROM sync_logs WHERE user_id = ? ORDER BY started_at DESC LIMIT 50
-    `).all(DEFAULT_USER_ID);
+    `).all(getUserId(req));
     res.json({ success: true, data: logs });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

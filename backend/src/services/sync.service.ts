@@ -157,6 +157,23 @@ export class SyncService {
         recordsProcessed++;
       }
 
+      // 6. Save Topics
+      if (profileData.topics) {
+        for (const [topic, count] of Object.entries(profileData.topics)) {
+          if (count > 0) {
+            const topicId = `${userId}_${platform}_${topic}`;
+            db.prepare(`
+              INSERT INTO platform_topics (id, user_id, platform, topic, problem_count, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?)
+              ON CONFLICT(user_id, platform, topic) DO UPDATE SET
+                problem_count = excluded.problem_count,
+                updated_at = excluded.updated_at
+            `).run(topicId, userId, platform, topic, count, now);
+            recordsProcessed++;
+          }
+        }
+      }
+
       // Complete sync log
       db.prepare(`
         UPDATE sync_logs

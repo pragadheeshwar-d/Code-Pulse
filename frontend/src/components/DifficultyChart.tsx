@@ -1,5 +1,5 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { DifficultyData } from '../types';
 
 interface DifficultyChartProps {
@@ -20,9 +20,16 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
   return (
     <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 flex flex-col justify-between">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-2 h-2 rounded-full bg-blue-500" />
-        <h3 className="font-semibold text-white text-sm">Difficulty</h3>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500" />
+          <h3 className="font-semibold text-white text-sm">Difficulty Breakdown</h3>
+        </div>
+        {hasData && (
+          <span className="text-[10px] text-[#64748b] bg-[#162035] px-2 py-0.5 rounded border border-[#22314d]">
+            Unified Tiers
+          </span>
+        )}
       </div>
 
       <div className="flex items-center justify-between gap-4 my-auto">
@@ -30,6 +37,21 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
         <div className="w-28 h-28 relative flex items-center justify-center shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const item = payload[0];
+                    const pct = data.total > 0 ? Math.round(((item.value as number) / data.total) * 100) : 0;
+                    return (
+                      <div className="bg-[#0d131f] border border-[#24324f] px-2.5 py-1.5 rounded-lg shadow-xl text-xs">
+                        <span className="font-semibold text-white">{item.name}: </span>
+                        <span className="font-mono text-blue-400 font-bold">{item.value} ({pct}%)</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Pie
                 data={chartData}
                 cx="50%"
@@ -49,7 +71,10 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
 
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-base font-bold text-white font-mono">
-              {hasData ? data.total : '—'}
+              {hasData ? data.total.toLocaleString() : '—'}
+            </span>
+            <span className="text-[9px] text-[#64748b] uppercase tracking-wider">
+              Total
             </span>
           </div>
         </div>
@@ -63,7 +88,7 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
               <span className="text-[#94a3b8]">Easy</span>
             </div>
             <span className="font-mono text-white">
-              {hasData ? `${data.easy.count} (${data.easy.percentage}%)` : '— (—%)'}
+              {hasData ? `${data.easy.count.toLocaleString()} (${data.easy.percentage}%)` : '— (—%)'}
             </span>
           </div>
 
@@ -74,7 +99,7 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
               <span className="text-[#94a3b8]">Medium</span>
             </div>
             <span className="font-mono text-white">
-              {hasData ? `${data.medium.count} (${data.medium.percentage}%)` : '— (—%)'}
+              {hasData ? `${data.medium.count.toLocaleString()} (${data.medium.percentage}%)` : '— (—%)'}
             </span>
           </div>
 
@@ -85,7 +110,7 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
               <span className="text-[#94a3b8]">Hard</span>
             </div>
             <span className="font-mono text-white">
-              {hasData ? `${data.hard.count} (${data.hard.percentage}%)` : '— (—%)'}
+              {hasData ? `${data.hard.count.toLocaleString()} (${data.hard.percentage}%)` : '— (—%)'}
             </span>
           </div>
         </div>

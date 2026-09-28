@@ -1,26 +1,30 @@
 {
-  "name": "codetrack-root",
+  "name": "codepulse-root",
   "version": "1.0.0",
   "private": true,
-  "description": "Production-ready Coding Progress Tracker for LeetCode, CodeChef, GeeksforGeeks, and Codeforces",
+  "description": "CodePulse — Production-ready Coding Progress Tracker for LeetCode, CodeChef, GeeksforGeeks, and Codeforces",
+  "type": "module",
   "scripts": {
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build": "cd backend && npm run build && cd ../frontend && npm run build",
-    "test": "cd backend && npm test"
+    "test": "cd backend && npm test",
+    "migrate": "node database/migrations/migrate.js",
+    "verify": "node scripts/verify-production.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
   },
   "keywords": [
     "coding-progress-tracker",
+    "codepulse",
     "leetcode",
     "codechef",
     "geeksforgeeks",
     "codeforces"
   ],
-  "author": "CodeTrack Team",
+  "author": "CodePulse Team",
   "license": "MIT"
 }

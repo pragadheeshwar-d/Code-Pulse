@@ -52,11 +52,18 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="pb-4 border-b border-[#1a2333]/80">
-        <h2 className="text-xl font-bold text-white tracking-tight">Solved Problems</h2>
-        <p className="text-xs text-[#8b9cb4] mt-0.5">
-          Real problems verified and aggregated across your connected coding accounts.
-        </p>
+      <div className="pb-4 border-b border-[#1a2333]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-white tracking-tight">Solved Problems</h2>
+          <p className="text-xs text-[#8b9cb4] mt-0.5">
+            Real problems verified and aggregated across your connected coding accounts.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[#8b9cb4] bg-[#101726] border border-[#1d263b] px-3 py-1.5 rounded-lg font-mono">
+            Showing <strong className="text-white">{filteredProblems.length}</strong> of <strong className="text-blue-400">{problems.length}</strong> tracked problems
+          </span>
+        </div>
       </div>
 
       {/* Filters & Search */}

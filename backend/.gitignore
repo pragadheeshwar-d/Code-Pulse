@@ -1,0 +1,10 @@
+# Backend .gitignore
+node_modules/
+dist/
+data/
+*.sqlite*
+*.log
+.env
+.env.*
+!.env.example
+coverage/

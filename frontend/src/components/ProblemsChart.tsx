@@ -29,13 +29,39 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
   const periods = ['7D', '30D', '3M', '6M', '1Y', 'All'];
   const hasData = hasConnectedPlatforms && data.length > 0;
 
+  const formatDateTick = (dateStr: string) => {
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }
+      return dateStr;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const latestCumulative = hasData ? data[data.length - 1]?.cumulative : 0;
+  const periodTotalSolved = hasData ? data.reduce((acc, cur) => acc + (cur.daily || 0), 0) : 0;
+
   return (
     <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 flex flex-col justify-between">
       {/* Chart Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-blue-400" />
-          <h3 className="font-semibold text-white text-sm">Problems Solved</h3>
+        <div>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-blue-400" />
+            <h3 className="font-semibold text-white text-sm">Problems Solved Trajectory</h3>
+            {hasData && (
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                +{periodTotalSolved} in this period
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-[#64748b] mt-0.5">
+            Continuous progression across all verified platforms
+          </p>
         </div>
 
         {/* Period Filter Buttons */}
@@ -60,7 +86,7 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
       <div className="h-64 w-full relative flex items-center justify-center">
         {hasData ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="problemsGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4} />
@@ -72,6 +98,8 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
                 dataKey="date"
                 stroke="#64748b"
                 tick={{ fill: '#64748b', fontSize: 11 }}
+                tickFormatter={formatDateTick}
+                minTickGap={28}
                 tickLine={false}
                 axisLine={{ stroke: '#1b253b' }}
               />
@@ -80,18 +108,29 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
                 tick={{ fill: '#64748b', fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
+                domain={['auto', 'auto']}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: '#0d131f',
-                  borderColor: '#24324f',
-                  borderRadius: '8px',
-                  color: '#fff',
-                  fontSize: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const point = payload[0].payload as ChartPoint;
+                    const dateFormatted = formatDateTick(point.date);
+                    return (
+                      <div className="bg-[#0d131f] border border-[#24324f] rounded-lg p-2.5 shadow-xl text-xs space-y-1">
+                        <div className="font-semibold text-white">{dateFormatted} ({point.date})</div>
+                        <div className="flex items-center justify-between gap-4 text-[#94a3b8]">
+                          <span>Daily Activity:</span>
+                          <span className="font-mono text-emerald-400 font-medium">+{point.daily} solved</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 text-[#94a3b8]">
+                          <span>Cumulative Total:</span>
+                          <span className="font-mono text-blue-400 font-bold">{point.cumulative} total</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
                 }}
-                labelStyle={{ color: '#94a3b8', marginBottom: '4px' }}
-                formatter={(val: any) => [`${val} solved`, 'Progress']}
               />
               <Area
                 type="monotone"
