@@ -5,6 +5,7 @@
   "compatibility_date": "2026-09-28",
   "assets": {
     "directory": "./frontend/dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
   }
 }
