@@ -17,7 +17,7 @@ import { ActivityPage } from './pages/ActivityPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 // API & Types
-import { api } from './services/api';
+import { api, getAuthToken, removeAuthToken } from './services/api';
 import {
   PlatformCardData,
   DashboardOverview,
@@ -36,6 +36,7 @@ import {
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavItem>('dashboard');
+  const [authStatus, setAuthStatus] = useState<'checking' | 'unauthenticated' | 'authenticated'>('checking');
 
   // Application State
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -72,11 +73,14 @@ export const App: React.FC = () => {
 
   const handleLogout = async () => {
     await api.logout();
-    loadAllData();
+    setUser(null);
+    setSettings(null);
+    setAuthStatus('unauthenticated');
   };
 
   // Load all initial application data
   const loadAllData = useCallback(async () => {
+    if (authStatus !== 'authenticated') return;
     try {
       const [
         profileRes,
@@ -122,7 +126,33 @@ export const App: React.FC = () => {
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     }
-  }, [chartPeriod, activityPlatform]);
+  }, [authStatus, chartPeriod, activityPlatform]);
+
+  // Validate the saved session before rendering any protected app content.
+  useEffect(() => {
+    let active = true;
+
+    const restoreSession = async () => {
+      if (!getAuthToken()) {
+        if (active) setAuthStatus('unauthenticated');
+        return;
+      }
+
+      try {
+        const session = await api.getMe();
+        if (!active) return;
+        setUser(session.user);
+        setSettings(session.settings);
+        setAuthStatus('authenticated');
+      } catch {
+        removeAuthToken();
+        if (active) setAuthStatus('unauthenticated');
+      }
+    };
+
+    restoreSession();
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     loadAllData();
@@ -203,6 +233,24 @@ export const App: React.FC = () => {
       return 'Never';
     }
   };
+
+  if (authStatus === 'checking') {
+    return <div className="min-h-screen bg-[#090d16]" aria-label="Checking your session" />;
+  }
+
+  if (authStatus === 'unauthenticated') {
+    return (
+      <AuthModal
+        isOpen
+        allowClose={false}
+        onClose={() => undefined}
+        onSuccess={(newUser) => {
+          setUser(newUser);
+          setAuthStatus('authenticated');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#090d16] text-[#e2e8f0]">
@@ -347,6 +395,7 @@ export const App: React.FC = () => {
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={(newUser) => {
           setUser(newUser);
+          setAuthStatus('authenticated');
           loadAllData();
         }}
       />

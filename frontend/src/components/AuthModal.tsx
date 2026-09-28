@@ -7,9 +7,10 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: UserProfile) => void;
+  allowClose?: boolean;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, allowClose = true }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -64,12 +65,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
       <div className="bg-[#0e1626] border border-[#1e293b] rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-left">
         {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a2333] transition"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {allowClose && (
+          <button
+            onClick={onClose}
+            aria-label="Close authentication dialog"
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a2333] transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Brand Header */}
         <div className="text-center mb-6">

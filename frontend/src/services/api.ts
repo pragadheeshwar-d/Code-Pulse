@@ -15,18 +15,26 @@ import {
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '/api';
-const TOKEN_KEY = 'codepulse_token';
+const TOKEN_KEY = 'codepulse_session_token';
+const LEGACY_TOKEN_KEY = 'codepulse_token';
 
 export function getAuthToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  // Keep credentials only for the active browser session. Opening CodePulse in a
+  // new session will therefore present the sign-in screen before any dashboard
+  // data is rendered.
+  return sessionStorage.getItem(TOKEN_KEY);
 }
 
 export function setAuthToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(TOKEN_KEY, token);
+  // A previous version stored tokens persistently. Remove it so it cannot
+  // silently bypass the sign-in screen after this update.
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
 }
 
 export function removeAuthToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

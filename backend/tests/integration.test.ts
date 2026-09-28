@@ -6,6 +6,21 @@ import { closeDb, getDb } from '../src/db/database.js';
 describe('Integration Tests: API Endpoints & State Integrity', () => {
   let app: any;
 
+  const createSession = async (port: number) => {
+    const response = await fetch(`http://localhost:${port}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Test Developer',
+        email: 'developer@example.com',
+        password: 'secure-password'
+      })
+    });
+    expect(response.status).toBe(201);
+    const body = await response.json();
+    return { Authorization: `Bearer ${body.data.token}` };
+  };
+
   beforeEach(() => {
     process.env.DATABASE_PATH = ':memory:';
     initializeDatabase();
@@ -33,8 +48,9 @@ describe('Integration Tests: API Endpoints & State Integrity', () => {
   it('GET /api/platforms: returns all 4 platforms in disconnected state when empty', async () => {
     const server = app.listen(0);
     const port = server.address().port;
+    const authorization = await createSession(port);
 
-    const res = await fetch(`http://localhost:${port}/api/platforms`);
+    const res = await fetch(`http://localhost:${port}/api/platforms`, { headers: authorization });
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
@@ -52,10 +68,11 @@ describe('Integration Tests: API Endpoints & State Integrity', () => {
   it('POST /api/goals & GET /api/goals: creates and retrieves a goal with calculated fields', async () => {
     const server = app.listen(0);
     const port = server.address().port;
+    const authorization = await createSession(port);
 
     const createRes = await fetch(`http://localhost:${port}/api/goals`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authorization },
       body: JSON.stringify({
         title: 'Master Trees & Graphs',
         goal_type: 'problems_solved',
@@ -72,7 +89,7 @@ describe('Integration Tests: API Endpoints & State Integrity', () => {
     expect(createData.data.current).toBe(0);
     expect(createData.data.progress_percentage).toBe(0);
 
-    const getRes = await fetch(`http://localhost:${port}/api/goals`);
+    const getRes = await fetch(`http://localhost:${port}/api/goals`, { headers: authorization });
     const getData = await getRes.json();
     expect(getData.data.length).toBe(1);
     expect(getData.data[0].id).toBe(createData.data.id);
@@ -83,10 +100,11 @@ describe('Integration Tests: API Endpoints & State Integrity', () => {
   it('POST /api/platforms/connect: rejects invalid platform name with 400', async () => {
     const server = app.listen(0);
     const port = server.address().port;
+    const authorization = await createSession(port);
 
     const res = await fetch(`http://localhost:${port}/api/platforms/connect`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authorization },
       body: JSON.stringify({
         platform: 'hackerrank_unsupported',
         username: 'someone'
@@ -95,6 +113,16 @@ describe('Integration Tests: API Endpoints & State Integrity', () => {
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.success).toBe(false);
+
+    server.close();
+  });
+
+  it('requires authentication for dashboard data', async () => {
+    const server = app.listen(0);
+    const port = server.address().port;
+
+    const res = await fetch(`http://localhost:${port}/api/platforms`);
+    expect(res.status).toBe(401);
 
     server.close();
   });
