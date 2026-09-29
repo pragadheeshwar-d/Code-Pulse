@@ -97,19 +97,21 @@ export class AnalyticsService {
     let latestRecordedAt: string | null = null;
     let maxSnapshotLongestStreak = 0;
     let maxSnapshotCurrentStreak = 0;
+    let maxSnapshotActiveDays = 0;
 
     for (const acc of accounts) {
       const snap = await this.db.prepare(
-        'SELECT * FROM stat_snapshots WHERE platform_account_id = ? ORDER BY recorded_at DESC LIMIT 1'
-      ).bind(acc.id).first<StatSnapshot>();
+        'SELECT * FROM stat_snapshots WHERE platform_account_id = ? OR (user_id = ? AND platform = ?) ORDER BY recorded_at DESC LIMIT 1'
+      ).bind(acc.id, userId, acc.platform).first<StatSnapshot>();
 
       if (snap) {
         totalSolved += snap.total_solved || 0;
         totalSubmissions += snap.total_submissions || 0;
         maxSnapshotCurrentStreak = Math.max(maxSnapshotCurrentStreak, snap.current_streak || 0);
         maxSnapshotLongestStreak = Math.max(maxSnapshotLongestStreak, snap.longest_streak || 0);
+        maxSnapshotActiveDays = Math.max(maxSnapshotActiveDays, snap.active_days || 0);
         
-        if (!latestRecordedAt || new Date(snap.recorded_at) > new Date(latestRecordedAt)) {
+        if (!latestRecordedAt || (snap.recorded_at && new Date(snap.recorded_at) > new Date(latestRecordedAt))) {
           latestRecordedAt = snap.recorded_at;
         }
       }
@@ -128,7 +130,7 @@ export class AnalyticsService {
     return {
       has_data: true,
       total_problems: totalSolved,
-      active_days: activeDatesList.length,
+      active_days: Math.max(activeDatesList.length, maxSnapshotActiveDays),
       current_streak: Math.max(current_streak, maxSnapshotCurrentStreak),
       longest_streak: Math.max(longest_streak, maxSnapshotLongestStreak),
       total_submissions,

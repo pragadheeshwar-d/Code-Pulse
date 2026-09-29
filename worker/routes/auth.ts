@@ -43,7 +43,7 @@ app.post('/register', async (c) => {
     await db.batch([
       db.prepare(
         'INSERT INTO users (id, name, email, password_hash, headline, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).bind(userId, name, email, passwordHash, headline || 'Software Engineer', now, now),
+      ).bind(userId, name, email, passwordHash, headline || '', now, now),
       db.prepare(
         'INSERT INTO user_settings (id, user_id, auto_sync_interval, theme, notifications_enabled, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
       ).bind(settingsId, userId, '12h', 'dark', 1, now)
