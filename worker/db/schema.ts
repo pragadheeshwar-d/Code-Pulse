@@ -1,7 +1,11 @@
--- CodePulse Production Database Schema (SQLite / WAL mode)
--- Target: SQLite 3 / node:sqlite / Cloudflare D1 / Turso / LibSQL
+export async function initializeDatabase(db: D1Database): Promise<void> {
+  try {
+    await db.exec('PRAGMA foreign_keys = ON;');
+  } catch (error) {
+    console.warn('Could not enforce PRAGMA foreign_keys = ON in D1 exec', error);
+  }
 
-
+  const schema = `
 -- 1. Users
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
@@ -167,3 +171,7 @@ CREATE INDEX IF NOT EXISTS idx_sync_logs_user ON sync_logs(user_id, started_at D
 CREATE INDEX IF NOT EXISTS idx_contest_results_user ON contest_results(user_id);
 CREATE INDEX IF NOT EXISTS idx_platform_topics_user ON platform_topics(user_id, platform);
 CREATE INDEX IF NOT EXISTS idx_problems_platform_external ON problems(platform, external_problem_id);
+  `;
+
+  await db.exec(schema);
+}

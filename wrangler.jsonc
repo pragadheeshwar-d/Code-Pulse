@@ -3,9 +3,20 @@
   "name": "codepulse",
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-28",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./frontend/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "codepulse-db",
+      "database_id": "43e1f4b1-a144-4a51-817d-eb8831e0b690"
+    }
+  ],
+  "triggers": {
+    "crons": ["0 */12 * * *"]
   }
 }

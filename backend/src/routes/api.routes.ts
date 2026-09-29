@@ -7,7 +7,7 @@ import { GoalService } from '../services/goal.service.js';
 import { getDb } from '../db/database.js';
 import { PlatformType } from '../types/index.js';
 
-import { AuthenticatedRequest, requireAuth } from '../middleware/auth.middleware.js';
+import { AuthenticatedRequest, resolveAuth, DEFAULT_USER_ID } from '../middleware/auth.middleware.js';
 
 const router = Router();
 const platformService = new PlatformService();
@@ -15,9 +15,9 @@ const syncService = new SyncService();
 const analyticsService = new AnalyticsService();
 const goalService = new GoalService();
 
-// Every dashboard resource belongs to an authenticated account.
-router.use(requireAuth);
-const getUserId = (req: Request): string => (req as AuthenticatedRequest).userId!;
+// Resolve active user (Bearer JWT if present, or user_default)
+router.use(resolveAuth);
+const getUserId = (req: Request): string => (req as AuthenticatedRequest).userId || DEFAULT_USER_ID;
 
 /**
  * GET /api/profile

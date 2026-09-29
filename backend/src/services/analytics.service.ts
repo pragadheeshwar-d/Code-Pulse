@@ -31,14 +31,15 @@ export class AnalyticsService {
     let latestRecordedAt: string | null = null;
     let maxSnapshotLongestStreak = 0;
     let maxSnapshotCurrentStreak = 0;
+    let maxSnapshotActiveDays = 0;
 
     for (const acc of accounts) {
       const snap = db.prepare(`
         SELECT * FROM stat_snapshots
-        WHERE platform_account_id = ?
+        WHERE platform_account_id = ? OR (user_id = ? AND platform = ?)
         ORDER BY recorded_at DESC
         LIMIT 1
-      `).get(acc.id) as StatSnapshot | undefined;
+      `).get(acc.id, userId, acc.platform) as StatSnapshot | undefined;
 
       if (snap) {
         totalSolved += snap.total_solved || 0;
@@ -49,7 +50,10 @@ export class AnalyticsService {
         if (snap.current_streak && snap.current_streak > maxSnapshotCurrentStreak) {
           maxSnapshotCurrentStreak = snap.current_streak;
         }
-        if (!latestRecordedAt || snap.recorded_at > latestRecordedAt) {
+        if (snap.active_days && snap.active_days > maxSnapshotActiveDays) {
+          maxSnapshotActiveDays = snap.active_days;
+        }
+        if (!latestRecordedAt || (snap.recorded_at && snap.recorded_at > latestRecordedAt)) {
           latestRecordedAt = snap.recorded_at;
         }
       }
@@ -66,14 +70,15 @@ export class AnalyticsService {
     const activeDatesList = dates.map(d => d.activity_date);
     const { currentStreak, longestStreak } = this.calculateStreaks(activeDatesList);
 
-    // Cross-verify streak calculations with platform verified metrics
+    // Cross-verify streak and active days calculations with platform verified metrics
     const finalLongestStreak = Math.max(longestStreak, maxSnapshotLongestStreak);
     const finalCurrentStreak = Math.max(currentStreak, maxSnapshotCurrentStreak);
+    const finalActiveDays = Math.max(activeDatesList.length, maxSnapshotActiveDays);
 
     return {
       has_data: true,
       total_problems: totalSolved,
-      active_days: activeDatesList.length,
+      active_days: finalActiveDays,
       current_streak: finalCurrentStreak,
       longest_streak: finalLongestStreak,
       total_submissions: totalSubmissions,

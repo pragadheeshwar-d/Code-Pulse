@@ -43,7 +43,7 @@ router.post('/register', async (req: AuthenticatedRequest, res: Response) => {
     db.prepare(`
       INSERT INTO users (id, name, email, password_hash, headline, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(userId, validated.name, validated.email, passwordHash, validated.headline || 'Software Engineer', now, now);
+    `).run(userId, validated.name, validated.email, passwordHash, validated.headline || '', now, now);
 
     db.prepare(`
       INSERT INTO user_settings (id, user_id, auto_sync_interval, theme, notifications_enabled, updated_at)
@@ -60,7 +60,7 @@ router.post('/register', async (req: AuthenticatedRequest, res: Response) => {
       id: userId,
       name: validated.name,
       email: validated.email,
-      headline: validated.headline || 'Software Engineer',
+      headline: validated.headline || '',
       created_at: now,
       updated_at: now
     };

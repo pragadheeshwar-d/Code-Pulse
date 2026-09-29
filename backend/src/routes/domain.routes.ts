@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { AuthenticatedRequest, requireAuth } from '../middleware/auth.middleware.js';
+import { AuthenticatedRequest, resolveAuth, DEFAULT_USER_ID } from '../middleware/auth.middleware.js';
 import { AnalyticsService } from '../services/analytics.service.js';
 import { PlatformService } from '../services/platform.service.js';
 import { getDb } from '../db/database.js';
@@ -8,14 +8,15 @@ const router = Router();
 const analyticsService = new AnalyticsService();
 const platformService = new PlatformService();
 
-router.use(requireAuth);
+router.use(resolveAuth);
+const getUserId = (req: AuthenticatedRequest): string => req.userId || DEFAULT_USER_ID;
 
 /**
  * GET /api/users - Get current user profile and settings
  */
 router.get('/users', (req: AuthenticatedRequest, res: Response) => {
   const db = getDb();
-  const userId = req.userId!;
+  const userId = getUserId(req);
   const user = db.prepare('SELECT id, name, email, headline, created_at, updated_at FROM users WHERE id = ?').get(userId);
   const settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId);
   res.json({ success: true, data: { user, settings } });
@@ -26,7 +27,7 @@ router.get('/users', (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/users/profile', (req: AuthenticatedRequest, res: Response) => {
   const db = getDb();
-  const userId = req.userId!;
+  const userId = getUserId(req);
   const user = db.prepare('SELECT id, name, email, headline, created_at, updated_at FROM users WHERE id = ?').get(userId);
   const settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId);
   res.json({ success: true, data: { user, settings } });
@@ -37,7 +38,7 @@ router.get('/users/profile', (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/streaks', (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId!;
+    const userId = getUserId(req);
     const overview = analyticsService.getDashboardOverview(userId);
     res.json({
       success: true,
@@ -60,7 +61,7 @@ router.get('/streaks', (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/progress', (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId!;
+    const userId = getUserId(req);
     const period = (req.query.period as string) || '30d';
     const timeline = analyticsService.getProblemsSolvedHistory(userId, period);
     const difficulty = analyticsService.getDifficultyDistribution(userId);
@@ -82,7 +83,7 @@ router.get('/progress', (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/leetcode', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId!;
+    const userId = getUserId(req);
     const platforms = await platformService.getPlatformAccountsWithStats(userId);
     const leetcode = platforms.find(p => p.platform === 'leetcode') || null;
     res.json({ success: true, data: leetcode });
@@ -96,7 +97,7 @@ router.get('/leetcode', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/codechef', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId!;
+    const userId = getUserId(req);
     const platforms = await platformService.getPlatformAccountsWithStats(userId);
     const codechef = platforms.find(p => p.platform === 'codechef') || null;
     res.json({ success: true, data: codechef });
@@ -110,7 +111,7 @@ router.get('/codechef', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/gfg', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId!;
+    const userId = getUserId(req);
     const platforms = await platformService.getPlatformAccountsWithStats(userId);
     const gfg = platforms.find(p => p.platform === 'geeksforgeeks') || null;
     res.json({ success: true, data: gfg });
@@ -124,7 +125,7 @@ router.get('/gfg', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/codeforces', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId!;
+    const userId = getUserId(req);
     const platforms = await platformService.getPlatformAccountsWithStats(userId);
     const codeforces = platforms.find(p => p.platform === 'codeforces') || null;
     res.json({ success: true, data: codeforces });

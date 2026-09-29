@@ -69,8 +69,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onViewAllGoals,
   onDeleteGoal
 }) => {
-  const hasData = overview?.has_data ?? false;
   const anyConnected = platforms.some(p => p.connected);
+  const totalSolvedFromPlatforms = platforms.reduce((sum, p) => sum + (p.stats?.total_solved || 0), 0);
+  const activeDaysFromPlatforms = Math.max(0, ...platforms.map(p => p.stats?.active_days || 0));
+  const currentStreakFromPlatforms = Math.max(0, ...platforms.map(p => p.stats?.current_streak || 0));
+  const totalSubmissionsFromPlatforms = platforms.reduce((sum, p) => sum + (p.stats?.total_submissions || 0), 0);
+
+  const effectiveHasData = (overview?.has_data ?? false) || (anyConnected && totalSolvedFromPlatforms > 0);
+  const totalProblems = overview?.total_problems ?? (anyConnected && totalSolvedFromPlatforms > 0 ? totalSolvedFromPlatforms : null);
+  const activeDays = overview?.active_days ?? (anyConnected && activeDaysFromPlatforms > 0 ? activeDaysFromPlatforms : null);
+  const currentStreak = overview?.current_streak ?? (anyConnected && currentStreakFromPlatforms > 0 ? currentStreakFromPlatforms : null);
+  const totalSubmissions = overview?.total_submissions ?? (anyConnected && totalSubmissionsFromPlatforms > 0 ? totalSubmissionsFromPlatforms : null);
 
   return (
     <div className="space-y-6">
@@ -78,34 +87,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Problems"
-          value={overview?.total_problems ?? null}
+          value={totalProblems}
           icon={ListOrdered}
           iconColor="text-blue-400"
-          hasData={hasData}
+          hasData={effectiveHasData}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
           title="Active Days"
-          value={overview?.active_days ?? null}
+          value={activeDays}
           icon={Calendar}
           iconColor="text-emerald-400"
-          hasData={hasData}
+          hasData={effectiveHasData}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
           title="Current Streak"
-          value={hasData && overview?.current_streak !== null && overview?.current_streak !== undefined ? `${overview.current_streak} days` : null}
+          value={effectiveHasData && currentStreak !== null && currentStreak !== undefined ? `${currentStreak} days` : null}
           icon={Flame}
           iconColor="text-amber-500"
-          hasData={hasData}
+          hasData={effectiveHasData}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
           title="Total Submissions"
-          value={overview?.total_submissions ?? null}
+          value={totalSubmissions}
           icon={CloudUpload}
           iconColor="text-sky-400"
-          hasData={hasData}
+          hasData={effectiveHasData}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
       </div>

@@ -222,9 +222,18 @@ export const App: React.FC = () => {
 
   // Format last synced text
   const getLastSyncedText = () => {
-    if (!overview?.last_synced_at) return 'Never';
+    let latestSync = overview?.last_synced_at || null;
+    if (!latestSync && platforms && platforms.length > 0) {
+      for (const p of platforms) {
+        const pSync = p.last_synced_at || p.stats?.recorded_at || null;
+        if (pSync && (!latestSync || pSync > latestSync)) {
+          latestSync = pSync;
+        }
+      }
+    }
+    if (!latestSync) return 'Never';
     try {
-      const diffSec = Math.floor((Date.now() - new Date(overview.last_synced_at).getTime()) / 1000);
+      const diffSec = Math.floor((Date.now() - new Date(latestSync).getTime()) / 1000);
       if (diffSec < 60) return 'Just now';
       if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
       if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
