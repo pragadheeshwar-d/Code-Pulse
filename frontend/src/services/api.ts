@@ -50,9 +50,30 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers
   });
 
-  const json = await res.json();
+  let json: any = null;
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    try {
+      json = await res.json();
+    } catch {
+      json = null;
+    }
+  }
+
+  if (!json) {
+    const rawText = await res.text().catch(() => '');
+    const cleanMsg = rawText.includes('Internal Server Error')
+      ? 'Server encountered an issue connecting to this platform profile. Please verify the handle and ensure profile is public.'
+      : (rawText || `Request failed with status ${res.status}`);
+    throw new Error(cleanMsg);
+  }
+
   if (!res.ok || json.success === false) {
-    throw new Error(json.error || `Request failed with status ${res.status}`);
+    let errMsg = json.error || `Request failed with status ${res.status}`;
+    if (errMsg.toLowerCase().includes('invalid username') || errMsg.toLowerCase().includes('not found')) {
+      errMsg = `${errMsg}. Please ensure the handle is spelled correctly and public on the platform.`;
+    }
+    throw new Error(errMsg);
   }
 
   return json.data !== undefined ? json.data : json;

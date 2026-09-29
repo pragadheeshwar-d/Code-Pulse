@@ -18,6 +18,14 @@ app.use('*', async (c, next) => {
 
 app.use('/api/*', cors());
 
+app.onError((err, c) => {
+  console.error('[Worker Error]:', err);
+  return c.json({
+    success: false,
+    error: err.message || 'An unexpected server error occurred'
+  }, 400);
+});
+
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 

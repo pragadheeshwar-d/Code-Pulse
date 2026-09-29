@@ -69,14 +69,22 @@ app.get('/platforms', async (c) => {
 });
 
 app.post('/platforms/connect', async (c) => {
-  const userId = c.get('userId');
-  const { platform, username } = await c.req.json();
-  if (!platform || !username) {
-    return c.json({ success: false, error: 'Platform and username are required' }, 400);
+  try {
+    const userId = c.get('userId');
+    const { platform, username } = await c.req.json();
+    if (!platform || !username) {
+      return c.json({ success: false, error: 'Platform and username are required' }, 400);
+    }
+    const cleanUsername = String(username).trim();
+    const platformService = new PlatformService(c.env.DB);
+    const data = await platformService.connectPlatform(userId, platform as any, cleanUsername);
+    return c.json({ success: true, data });
+  } catch (err: any) {
+    return c.json({ 
+      success: false, 
+      error: err.message || 'Failed to connect platform account' 
+    }, 400);
   }
-  const platformService = new PlatformService(c.env.DB);
-  const data = await platformService.connectPlatform(userId, platform as any, username);
-  return c.json({ success: true, data });
 });
 
 app.delete('/platforms/:platform', async (c) => {
