@@ -46,13 +46,28 @@ export class SyncService {
 
       const problemStmts = [];
       for (const p of data.recent_problems) {
+        const problemId = `${platform}_${p.external_id}`;
         problemStmts.push(this.db.prepare(`
-          INSERT INTO problems (id, user_id, platform, external_id, title, slug, url, difficulty, topic, solved_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT (user_id, platform, external_id) DO UPDATE SET
-            title = excluded.title, difficulty = excluded.difficulty, topic = excluded.topic, solved_at = excluded.solved_at
+          INSERT INTO problems (id, platform, external_problem_id, title, slug, url, difficulty, topic, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+          ON CONFLICT (platform, external_problem_id) DO UPDATE SET
+            title = excluded.title,
+            slug = excluded.slug,
+            url = excluded.url,
+            difficulty = excluded.difficulty,
+            topic = COALESCE(excluded.topic, problems.topic)
         `).bind(
-          crypto.randomUUID(), userId, platform, p.external_id, p.title, p.slug || null, p.url || null, p.difficulty, p.topic || null, p.solved_at
+          problemId, platform, p.external_id, p.title, p.slug || null, p.url || null, p.difficulty, p.topic || null
+        ));
+
+        const userProblemId = `${userId}_${problemId}`;
+        problemStmts.push(this.db.prepare(`
+          INSERT INTO user_problems (id, user_id, problem_id, solved_at, first_seen_at)
+          VALUES (?, ?, ?, ?, datetime('now'))
+          ON CONFLICT (user_id, problem_id) DO UPDATE SET
+            solved_at = excluded.solved_at
+        `).bind(
+          userProblemId, userId, problemId, p.solved_at
         ));
       }
       
@@ -63,13 +78,16 @@ export class SyncService {
 
       const activityStmts = [];
       for (const a of data.activities) {
+        const actId = `${userId}_${platform}_${a.activity_date}`;
         activityStmts.push(this.db.prepare(`
           INSERT INTO activity_records (id, user_id, platform, activity_date, problems_solved, submissions, rating_change)
           VALUES (?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT (user_id, platform, activity_date) DO UPDATE SET
-            problems_solved = excluded.problems_solved, submissions = excluded.submissions, rating_change = excluded.rating_change
+            problems_solved = MAX(activity_records.problems_solved, excluded.problems_solved),
+            submissions = MAX(activity_records.submissions, excluded.submissions),
+            rating_change = COALESCE(excluded.rating_change, activity_records.rating_change)
         `).bind(
-          crypto.randomUUID(), userId, platform, a.activity_date, a.problems_solved, a.submissions, a.rating_change || null
+          actId, userId, platform, a.activity_date, a.problems_solved, a.submissions, a.rating_change || null
         ));
       }
       for (let i = 0; i < activityStmts.length; i += MAX_BATCH_SIZE) {
@@ -78,13 +96,30 @@ export class SyncService {
 
       const contestStmts = [];
       for (const c of data.contests) {
+        const contestId = `${platform}_${c.external_contest_id}`;
         contestStmts.push(this.db.prepare(`
-          INSERT INTO contests (id, user_id, platform, external_contest_id, name, contest_date, url, rank, problems_solved, rating_before, rating_after, rating_change)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT (user_id, platform, external_contest_id) DO UPDATE SET
-            name = excluded.name, rank = excluded.rank, rating_after = excluded.rating_after
+          INSERT INTO contests (id, platform, external_contest_id, name, contest_date, url)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT (platform, external_contest_id) DO UPDATE SET
+            name = excluded.name,
+            contest_date = excluded.contest_date,
+            url = excluded.url
         `).bind(
-          crypto.randomUUID(), userId, platform, c.external_contest_id, c.name, c.contest_date, c.url || null, c.rank || null, c.problems_solved || null, c.rating_before || null, c.rating_after || null, c.rating_change || null
+          contestId, platform, c.external_contest_id, c.name, c.contest_date, c.url || null
+        ));
+
+        const contestResultId = `${userId}_${contestId}`;
+        contestStmts.push(this.db.prepare(`
+          INSERT INTO contest_results (id, user_id, contest_id, rank, problems_solved, rating_before, rating_after, rating_change, recorded_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+          ON CONFLICT (user_id, contest_id) DO UPDATE SET
+            rank = excluded.rank,
+            problems_solved = excluded.problems_solved,
+            rating_before = excluded.rating_before,
+            rating_after = excluded.rating_after,
+            rating_change = excluded.rating_change
+        `).bind(
+          contestResultId, userId, contestId, c.rank || null, c.problems_solved || null, c.rating_before || null, c.rating_after || null, c.rating_change || null
         ));
       }
       for (let i = 0; i < contestStmts.length; i += MAX_BATCH_SIZE) {
@@ -93,13 +128,17 @@ export class SyncService {
 
       if (data.topics) {
         const topicStmts = [];
-        for (const [topic_name, count] of Object.entries(data.topics)) {
-          topicStmts.push(this.db.prepare(`
-            INSERT INTO platform_topics (id, user_id, platform, topic_name, problems_count)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT (user_id, platform, topic_name) DO UPDATE SET
-              problems_count = excluded.problems_count
-          `).bind(crypto.randomUUID(), userId, platform, topic_name, count));
+        for (const [topic, count] of Object.entries(data.topics)) {
+          if (count > 0) {
+            const topicId = `${userId}_${platform}_${topic}`;
+            topicStmts.push(this.db.prepare(`
+              INSERT INTO platform_topics (id, user_id, platform, topic, problem_count, updated_at)
+              VALUES (?, ?, ?, ?, ?, datetime('now'))
+              ON CONFLICT (user_id, platform, topic) DO UPDATE SET
+                problem_count = excluded.problem_count,
+                updated_at = datetime('now')
+            `).bind(topicId, userId, platform, topic, count));
+          }
         }
         for (let i = 0; i < topicStmts.length; i += MAX_BATCH_SIZE) {
           await this.db.batch(topicStmts.slice(i, i + MAX_BATCH_SIZE));

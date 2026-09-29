@@ -24,7 +24,7 @@ app.get('/profile', async (c) => {
   const userId = c.get('userId');
   const db = c.env.DB;
   const user = await db.prepare(
-    `SELECT u.id, u.name, u.email, s.headline, s.theme, s.github_username, s.linkedin_url 
+    `SELECT u.id, u.name, u.email, s.auto_sync_interval, s.theme, s.notifications_enabled 
      FROM users u LEFT JOIN user_settings s ON u.id = s.user_id WHERE u.id = ?`
   ).bind(userId).first();
   return c.json({ success: true, data: user });
@@ -40,18 +40,17 @@ app.patch('/profile', async (c) => {
   }
   
   if (body.settings) {
-    const { headline, theme, github_username, linkedin_url } = body.settings;
+    const { auto_sync_interval, theme, notifications_enabled } = body.settings;
     const now = new Date().toISOString();
     await db.prepare(
-      `INSERT INTO user_settings (user_id, headline, theme, github_username, linkedin_url, updated_at) 
+      `INSERT INTO user_settings (id, user_id, auto_sync_interval, theme, notifications_enabled, updated_at) 
        VALUES (?, ?, ?, ?, ?, ?) 
        ON CONFLICT(user_id) DO UPDATE SET 
-       headline = COALESCE(excluded.headline, headline), 
+       auto_sync_interval = COALESCE(excluded.auto_sync_interval, auto_sync_interval), 
        theme = COALESCE(excluded.theme, theme), 
-       github_username = COALESCE(excluded.github_username, github_username), 
-       linkedin_url = COALESCE(excluded.linkedin_url, linkedin_url), 
+       notifications_enabled = COALESCE(excluded.notifications_enabled, notifications_enabled), 
        updated_at = excluded.updated_at`
-    ).bind(userId, headline || null, theme || null, github_username || null, linkedin_url || null, now).run();
+    ).bind(crypto.randomUUID(), userId, auto_sync_interval || '12h', theme || 'dark', notifications_enabled !== undefined ? notifications_enabled : 1, now).run();
   }
   
   return c.json({ success: true, data: { message: 'Profile updated' } });
@@ -172,7 +171,7 @@ app.get('/analytics', async (c) => {
   const [difficulty, topics, insights] = await Promise.all([
     analyticsService.getDifficultyDistribution(userId),
     analyticsService.getTopicDistribution(userId),
-    analyticsService.getPerformanceInsights(userId)
+    analyticsService.getSmartInsights(userId)
   ]);
   
   return c.json({ 

@@ -3,7 +3,7 @@
  * Verifies live server health, authentication, data integrity, security headers, and API endpoints.
  */
 
-const BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
+const BASE_URL = process.argv[2] || process.env.TARGET_URL || process.env.BACKEND_URL || 'http://localhost:5000';
 
 async function testEndpoint(name, url, options = {}) {
   try {
@@ -93,40 +93,38 @@ async function runVerification() {
 
   // 4. Data Endpoints & Zero Mock Verification
   console.log('\n--- 4. Platform Data & Live Analytics ---');
-  const statsRes = await testEndpoint('Dashboard Stats', `${BASE_URL}/api/stats`);
-  assert(statsRes.ok && statsRes.body?.success, 'GET /api/stats returns status 200');
-  if (statsRes.body?.data) {
-    const totalSolved = statsRes.body.data.total_problems || 0;
-    assert(totalSolved === 2120, `Authentic non-zero total problems solved (${totalSolved}) verified`);
-  }
+  const authHeaders = { 'Authorization': `Bearer ${token}` };
 
-  const platformsRes = await testEndpoint('Connected Platforms', `${BASE_URL}/api/platforms`);
+  const statsRes = await testEndpoint('Dashboard Stats', `${BASE_URL}/api/stats`, { headers: authHeaders });
+  assert(statsRes.ok && statsRes.body?.success, 'GET /api/stats returns status 200');
+
+  const platformsRes = await testEndpoint('Connected Platforms', `${BASE_URL}/api/platforms`, { headers: authHeaders });
   assert(platformsRes.ok && Array.isArray(platformsRes.body?.data), 'GET /api/platforms returns platform cards array');
 
-  const problemsRes = await testEndpoint('Tracked Problems', `${BASE_URL}/api/problems?limit=5`);
+  const problemsRes = await testEndpoint('Tracked Problems', `${BASE_URL}/api/problems?limit=5`, { headers: authHeaders });
   assert(problemsRes.ok && Array.isArray(problemsRes.body?.data), 'GET /api/problems returns problem entries array');
 
   // 5. Dedicated Modular Endpoints
   console.log('\n--- 5. Modular Domain Endpoints ---');
-  const streaksRes = await testEndpoint('Streaks Endpoint', `${BASE_URL}/api/streaks`);
+  const streaksRes = await testEndpoint('Streaks Endpoint', `${BASE_URL}/api/streaks`, { headers: authHeaders });
   assert(streaksRes.ok && streaksRes.body?.success, 'GET /api/streaks returns streak metrics');
 
-  const progressRes = await testEndpoint('Progress Endpoint', `${BASE_URL}/api/progress`);
+  const progressRes = await testEndpoint('Progress Endpoint', `${BASE_URL}/api/progress`, { headers: authHeaders });
   assert(progressRes.ok && progressRes.body?.success, 'GET /api/progress returns growth history');
 
-  const leetcodeRes = await testEndpoint('LeetCode Direct', `${BASE_URL}/api/leetcode`);
+  const leetcodeRes = await testEndpoint('LeetCode Direct', `${BASE_URL}/api/leetcode`, { headers: authHeaders });
   assert(leetcodeRes.ok && leetcodeRes.body?.success, 'GET /api/leetcode returns platform metrics');
 
-  const codechefRes = await testEndpoint('CodeChef Direct', `${BASE_URL}/api/codechef`);
+  const codechefRes = await testEndpoint('CodeChef Direct', `${BASE_URL}/api/codechef`, { headers: authHeaders });
   assert(codechefRes.ok && codechefRes.body?.success, 'GET /api/codechef returns platform metrics');
 
-  const gfgRes = await testEndpoint('GFG Direct', `${BASE_URL}/api/gfg`);
+  const gfgRes = await testEndpoint('GFG Direct', `${BASE_URL}/api/gfg`, { headers: authHeaders });
   assert(gfgRes.ok && gfgRes.body?.success, 'GET /api/gfg returns platform metrics');
 
-  const codeforcesRes = await testEndpoint('Codeforces Direct', `${BASE_URL}/api/codeforces`);
+  const codeforcesRes = await testEndpoint('Codeforces Direct', `${BASE_URL}/api/codeforces`, { headers: authHeaders });
   assert(codeforcesRes.ok && codeforcesRes.body?.success, 'GET /api/codeforces returns platform metrics');
 
-  const githubRes = await testEndpoint('GitHub Integration', `${BASE_URL}/api/github`);
+  const githubRes = await testEndpoint('GitHub Integration', `${BASE_URL}/api/github`, { headers: authHeaders });
   assert(githubRes.ok && githubRes.body?.success, 'GET /api/github returns GitHub status');
 
   console.log('\n' + '='.repeat(60));

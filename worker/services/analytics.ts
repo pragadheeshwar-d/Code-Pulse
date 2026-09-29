@@ -190,29 +190,48 @@ export class AnalyticsService {
 
   async getCodingActivity(userId: string, platformFilter?: string) {
     let query = `
-      SELECT activity_date as date, SUM(problems_solved) as count
+      SELECT activity_date as date, 
+             SUM(problems_solved) as problems_solved, 
+             SUM(submissions) as submissions,
+             GROUP_CONCAT(DISTINCT ar.platform) as platforms
       FROM activity_records ar
       JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
       WHERE ar.user_id = ? AND activity_date >= date('now', '-365 days')
     `;
     const params: any[] = [userId];
 
-    if (platformFilter) {
+    if (platformFilter && platformFilter.toLowerCase() !== 'all') {
       query += ` AND ar.platform = ?`;
-      params.push(platformFilter);
+      params.push(platformFilter.toLowerCase());
     }
 
     query += ` GROUP BY activity_date ORDER BY activity_date ASC`;
 
-    const { results: activities } = await this.db.prepare(query).bind(...params).all<{ date: string; count: number }>();
+    const { results: activities } = await this.db.prepare(query).bind(...params).all<{ 
+      date: string; 
+      problems_solved: number; 
+      submissions: number; 
+      platforms: string | null; 
+    }>();
 
     return activities.map(a => {
+      const pSolved = a.problems_solved || 0;
+      const subs = a.submissions || 0;
+      const count = pSolved > 0 ? pSolved : (subs > 0 ? subs : 1);
       let level = 0;
-      if (a.count > 0) level = 1;
-      if (a.count > 2) level = 2;
-      if (a.count > 5) level = 3;
-      if (a.count > 10) level = 4;
-      return { date: a.date, count: a.count, level };
+      if (count >= 10) level = 4;
+      else if (count >= 6) level = 3;
+      else if (count >= 3) level = 2;
+      else if (count >= 1) level = 1;
+
+      return {
+        date: a.date,
+        count,
+        problems_solved: pSolved,
+        submissions: subs,
+        platforms: a.platforms ? a.platforms.split(',') : [],
+        level
+      };
     });
   }
 
@@ -221,7 +240,16 @@ export class AnalyticsService {
       `SELECT id, platform FROM platform_accounts WHERE user_id = ? AND connection_status = 'connected'`
     ).bind(userId).all<{ id: string; platform: PlatformType }>();
 
-    let easy = 0, medium = 0, hard = 0, unknown = 0;
+    if (accounts.length === 0) {
+      return {
+        easy: { count: 0, percentage: 0 },
+        medium: { count: 0, percentage: 0 },
+        hard: { count: 0, percentage: 0 },
+        total: 0
+      };
+    }
+
+    let easy = 0, medium = 0, hard = 0;
 
     for (const acc of accounts) {
       const snap = await this.db.prepare(
@@ -235,55 +263,75 @@ export class AnalyticsService {
       }
     }
 
-    const { results: unknownProbs } = await this.db.prepare(`
-      SELECT count(*) as count 
-      FROM problems p
-      JOIN platform_accounts pa ON p.user_id = pa.user_id AND p.platform = pa.platform AND pa.connection_status = 'connected'
-      WHERE p.user_id = ? AND (p.difficulty IS NULL OR p.difficulty = 'Other')
-    `).bind(userId).all<{ count: number }>();
+    const total = easy + medium + hard;
+    const calcPct = (cnt: number) => (total > 0 ? Math.round((cnt / total) * 100) : 0);
 
-    unknown += (unknownProbs[0]?.count || 0);
-
-    return { easy, medium, hard, unknown };
+    return {
+      easy: { count: easy, percentage: calcPct(easy) },
+      medium: { count: medium, percentage: calcPct(medium) },
+      hard: { count: hard, percentage: calcPct(hard) },
+      total
+    };
   }
 
   async getTopicDistribution(userId: string) {
+    const standardTopics = [
+      'Arrays',
+      'Strings',
+      'Sorting',
+      'Binary Search',
+      'Hashing',
+      'Two Pointers',
+      'Sliding Window',
+      'Linked Lists',
+      'Stack',
+      'Queue',
+      'Trees',
+      'Graphs',
+      'Dynamic Programming',
+      'Greedy',
+      'Math',
+      'Bit Manipulation'
+    ];
+
     const aliasMap: Record<string, string> = {
-      'dfs': 'Graph/Tree', 'bfs': 'Graph/Tree', 'graph': 'Graph/Tree', 'tree': 'Graph/Tree',
-      'dp': 'Dynamic Programming', 'dynamic-programming': 'Dynamic Programming',
+      'dfs': 'Graphs', 'bfs': 'Graphs', 'graph': 'Graphs', 'graphs': 'Graphs', 'tree': 'Trees', 'trees': 'Trees', 'binary tree': 'Trees',
+      'dp': 'Dynamic Programming', 'dynamic-programming': 'Dynamic Programming', 'dynamic programming': 'Dynamic Programming',
       'math': 'Math', 'mathematics': 'Math', 'number-theory': 'Math',
       'string': 'Strings', 'strings': 'Strings',
-      'array': 'Arrays', 'arrays': 'Arrays',
-      'hash-table': 'Hashing', 'hashing': 'Hashing', 'map': 'Hashing',
-      'sorting': 'Sorting', 'sort': 'Sorting',
+      'array': 'Arrays', 'arrays': 'Arrays', 'data structures': 'Arrays',
+      'hash-table': 'Hashing', 'hashing': 'Hashing', 'hash table': 'Hashing', 'map': 'Hashing',
+      'sorting': 'Sorting', 'sort': 'Sorting', 'sortings': 'Sorting',
       'greedy': 'Greedy',
-      'binary-search': 'Binary Search',
-      'two-pointers': 'Two Pointers',
-      'bit-manipulation': 'Bit Manipulation',
-      'stack': 'Stack/Queue', 'queue': 'Stack/Queue',
-      'linked-list': 'Linked List'
+      'binary-search': 'Binary Search', 'binary search': 'Binary Search', 'searching': 'Binary Search',
+      'two-pointers': 'Two Pointers', 'two pointers': 'Two Pointers',
+      'sliding-window': 'Sliding Window', 'sliding window': 'Sliding Window',
+      'bit-manipulation': 'Bit Manipulation', 'bit manipulation': 'Bit Manipulation', 'bitmasks': 'Bit Manipulation',
+      'stack': 'Stack', 'queue': 'Queue', 'stack/queue': 'Stack',
+      'linked-list': 'Linked Lists', 'linked list': 'Linked Lists', 'linked lists': 'Linked Lists'
     };
 
-    const topicsMap = new Map<string, number>();
+    const topicCounts: Record<string, number> = {};
 
     const { results: dbTopics } = await this.db.prepare(`
-      SELECT pt.topic_name, pt.problems_count
+      SELECT pt.topic, pt.problem_count
       FROM platform_topics pt
       JOIN platform_accounts pa ON pt.user_id = pa.user_id AND pt.platform = pa.platform AND pa.connection_status = 'connected'
       WHERE pt.user_id = ?
-    `).bind(userId).all<{ topic_name: string; problems_count: number }>();
+    `).bind(userId).all<{ topic: string; problem_count: number }>();
 
     for (const t of dbTopics) {
-      const lowerTopic = t.topic_name.toLowerCase();
-      const standardTopic = aliasMap[lowerTopic] || t.topic_name;
-      topicsMap.set(standardTopic, (topicsMap.get(standardTopic) || 0) + t.problems_count);
+      const lowerTopic = t.topic.toLowerCase();
+      const standardTopic = aliasMap[lowerTopic] || t.topic;
+      topicCounts[standardTopic] = (topicCounts[standardTopic] || 0) + t.problem_count;
     }
 
     const { results: problemTopics } = await this.db.prepare(`
-      SELECT p.topic, COUNT(*) as count
-      FROM problems p
-      JOIN platform_accounts pa ON p.user_id = pa.user_id AND p.platform = pa.platform AND pa.connection_status = 'connected'
-      WHERE p.user_id = ? AND p.topic IS NOT NULL
+      SELECT p.topic, COUNT(up.id) as count
+      FROM user_problems up
+      JOIN problems p ON up.problem_id = p.id
+      JOIN platform_accounts pa ON pa.user_id = up.user_id AND pa.platform = p.platform AND pa.connection_status = 'connected'
+      WHERE up.user_id = ? AND p.topic IS NOT NULL AND p.topic != ''
       GROUP BY p.topic
     `).bind(userId).all<{ topic: string; count: number }>();
 
@@ -291,34 +339,43 @@ export class AnalyticsService {
       if (!t.topic) continue;
       const lowerTopic = t.topic.toLowerCase();
       const standardTopic = aliasMap[lowerTopic] || t.topic;
-      topicsMap.set(standardTopic, (topicsMap.get(standardTopic) || 0) + t.count);
+      topicCounts[standardTopic] = (topicCounts[standardTopic] || 0) + t.count;
     }
 
-    const topicsArray = Array.from(topicsMap.entries()).map(([topic, count]) => ({ topic, count }));
-    topicsArray.sort((a, b) => b.count - a.count);
+    let totalTopicSolved = 0;
+    for (const name of standardTopics) {
+      totalTopicSolved += (topicCounts[name] || 0);
+    }
 
-    return topicsArray.slice(0, 16);
+    return standardTopics.map(name => {
+      const count = topicCounts[name] || 0;
+      const percentage = totalTopicSolved > 0 ? Math.round((count / totalTopicSolved) * 100) : 0;
+      return { name, count, percentage };
+    });
   }
 
   async getRecentActivity(userId: string, limit: number) {
     const { results: problems } = await this.db.prepare(`
-      SELECT p.id, p.platform, p.external_id, p.title, p.slug, p.url, p.difficulty, p.topic, p.solved_at
-      FROM problems p
-      JOIN platform_accounts pa ON p.user_id = pa.user_id AND p.platform = pa.platform AND pa.connection_status = 'connected'
-      WHERE p.user_id = ?
-      ORDER BY p.solved_at DESC
+      SELECT p.platform, p.title, p.difficulty, up.solved_at as date, p.url
+      FROM user_problems up
+      JOIN problems p ON up.problem_id = p.id
+      JOIN platform_accounts pa ON pa.user_id = up.user_id AND pa.platform = p.platform AND pa.connection_status = 'connected'
+      WHERE up.user_id = ?
+      ORDER BY up.solved_at DESC
       LIMIT ?
     `).bind(userId, limit).all();
 
     return problems;
   }
 
-  async getContests(userId: string, limit: number) {
+  async getContests(userId: string, limit: number = 50) {
     const { results: contests } = await this.db.prepare(`
-      SELECT c.id, c.platform, c.external_contest_id, c.name, c.contest_date, c.url, c.rank, c.problems_solved, c.rating_before, c.rating_after, c.rating_change
-      FROM contests c
-      JOIN platform_accounts pa ON c.user_id = pa.user_id AND c.platform = pa.platform AND pa.connection_status = 'connected'
-      WHERE c.user_id = ?
+      SELECT c.platform, c.name, c.contest_date, c.url,
+             cr.rank, cr.problems_solved, cr.rating_before, cr.rating_after, cr.rating_change
+      FROM contest_results cr
+      JOIN contests c ON cr.contest_id = c.id
+      JOIN platform_accounts pa ON pa.user_id = cr.user_id AND pa.platform = c.platform AND pa.connection_status = 'connected'
+      WHERE cr.user_id = ?
       ORDER BY c.contest_date DESC
       LIMIT ?
     `).bind(userId, limit).all();
@@ -326,7 +383,9 @@ export class AnalyticsService {
     return contests;
   }
 
-  async getSmartInsights(userId: string) {
+  async getSmartInsights(userId: string): Promise<string[]> {
+    const insights: string[] = [];
+
     const { results: thisWeek } = await this.db.prepare(`
       SELECT SUM(problems_solved) as solved
       FROM activity_records ar
@@ -344,27 +403,42 @@ export class AnalyticsService {
     const thisWeekSolved = thisWeek[0]?.solved || 0;
     const lastWeekSolved = lastWeek[0]?.solved || 0;
 
-    let weekOverWeek = 'Stable';
-    if (thisWeekSolved > lastWeekSolved) weekOverWeek = 'Improving';
-    else if (thisWeekSolved < lastWeekSolved) weekOverWeek = 'Declining';
+    if (thisWeekSolved > lastWeekSolved && lastWeekSolved > 0) {
+      insights.push(`You solved ${thisWeekSolved - lastWeekSolved} more problems this week (${thisWeekSolved}) than last week (${lastWeekSolved}).`);
+    } else if (thisWeekSolved > 0) {
+      insights.push(`You solved ${thisWeekSolved} problems in the last 7 days.`);
+    }
 
     const { results: platformActivity } = await this.db.prepare(`
-      SELECT ar.platform, SUM(problems_solved) as solved
+      SELECT ar.platform, SUM(problems_solved) as solved, SUM(submissions) as subs
       FROM activity_records ar
       JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
       WHERE ar.user_id = ? AND ar.activity_date >= date('now', '-30 days')
       GROUP BY ar.platform
-      ORDER BY solved DESC
+      ORDER BY solved DESC, subs DESC
       LIMIT 1
-    `).bind(userId).all<{ platform: string; solved: number }>();
+    `).bind(userId).all<{ platform: string; solved: number; subs: number }>();
 
-    const mostActivePlatform = platformActivity[0]?.platform || 'None';
+    if (platformActivity[0] && (platformActivity[0].solved > 0 || platformActivity[0].subs > 0)) {
+      const topP = platformActivity[0].platform;
+      const platformName = topP === 'leetcode' ? 'LeetCode'
+        : topP === 'codechef' ? 'CodeChef'
+        : topP === 'geeksforgeeks' ? 'GeeksforGeeks'
+        : 'Codeforces';
+      insights.push(`Your most active platform this month was ${platformName} with ${platformActivity[0].solved} problems solved.`);
+    }
 
-    return {
-      week_over_week: weekOverWeek,
-      this_week_solved: thisWeekSolved,
-      last_week_solved: lastWeekSolved,
-      most_active_platform: mostActivePlatform
-    };
+    const { results: activeDaysWeek } = await this.db.prepare(`
+      SELECT COUNT(DISTINCT ar.activity_date) as cnt
+      FROM activity_records ar
+      JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
+      WHERE ar.user_id = ? AND ar.activity_date >= date('now', '-7 days') AND (ar.problems_solved > 0 OR ar.submissions > 0)
+    `).bind(userId).all<{ cnt: number }>();
+
+    if (activeDaysWeek[0]?.cnt && activeDaysWeek[0].cnt > 0) {
+      insights.push(`You were active on ${activeDaysWeek[0].cnt} of the last 7 tracked days.`);
+    }
+
+    return insights;
   }
 }

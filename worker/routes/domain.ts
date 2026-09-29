@@ -12,7 +12,7 @@ app.get('/users', async (c) => {
   const userId = c.get('userId');
   const db = c.env.DB;
   const user = await db.prepare(
-    `SELECT u.id, u.name, u.email, s.headline, s.theme 
+    `SELECT u.id, u.name, u.email, s.theme, s.auto_sync_interval 
      FROM users u LEFT JOIN user_settings s ON u.id = s.user_id WHERE u.id = ?`
   ).bind(userId).first();
   return c.json({ success: true, data: user });
@@ -22,7 +22,7 @@ app.get('/users/profile', async (c) => {
   const userId = c.get('userId');
   const db = c.env.DB;
   const user = await db.prepare(
-    `SELECT u.id, u.name, u.email, s.headline, s.theme, s.github_username, s.linkedin_url 
+    `SELECT u.id, u.name, u.email, s.theme, s.auto_sync_interval 
      FROM users u LEFT JOIN user_settings s ON u.id = s.user_id WHERE u.id = ?`
   ).bind(userId).first();
   return c.json({ success: true, data: user });
@@ -35,9 +35,9 @@ app.get('/streaks', async (c) => {
   return c.json({ 
     success: true, 
     data: {
-      currentStreak: overview.currentStreak,
-      maxStreak: overview.maxStreak,
-      lastActive: overview.lastActive
+      currentStreak: overview.current_streak,
+      maxStreak: overview.longest_streak,
+      lastActive: overview.last_synced_at
     } 
   });
 });
@@ -71,17 +71,16 @@ app.get('/gfg', getPlatformRoute('geeksforgeeks'));
 app.get('/codeforces', getPlatformRoute('codeforces'));
 
 app.get('/github', async (c) => {
-  const db = c.env.DB;
-  const userId = c.get('userId');
-  
-  const settings = await db.prepare(
-    'SELECT github_username FROM user_settings WHERE user_id = ?'
-  ).bind(userId).first<{ github_username: string | null }>();
-  
-  const username = settings?.github_username || c.env.GITHUB_USERNAME;
+  const username = c.req.query('username') || c.env.GITHUB_USERNAME;
   
   if (!username) {
-    return c.json({ success: false, error: 'GitHub username not configured' }, 404);
+    return c.json({ 
+      success: true, 
+      data: { 
+        configured: false, 
+        message: 'GitHub username not configured. Pass as query param or configure in environment to view GitHub stats.' 
+      } 
+    });
   }
   
   try {

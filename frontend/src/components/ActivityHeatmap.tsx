@@ -21,7 +21,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     { id: 'codeforces', label: 'Codeforces' }
   ];
 
-  // Build 52 weeks calendar grid (364 days ending today)
+  // Build 52 weeks calendar grid (aligned Monday to Sunday, ending current week)
   const { weeks, monthLabels } = useMemo(() => {
     const dataMap = new Map<string, HeatmapDay>();
     for (const d of activityData) {
@@ -29,40 +29,43 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     }
 
     const today = new Date();
-    const resultWeeks: { dateStr: string; dayData: HeatmapDay | null; dayOfWeek: number }[][] = [];
-    const months: { label: string; weekIndex: number }[] = [];
+    today.setHours(0, 0, 0, 0);
 
-    // Align to Sunday/Monday
-    const totalDays = 52 * 7;
+    // Monday is day 1, Sunday is day 0 in JS getDay()
+    const currentDay = today.getDay();
+    const daysSinceMonday = (currentDay + 6) % 7; // 0 for Mon, 6 for Sun
+
+    // Start on Monday 51 weeks ago (52 weeks total)
     const startDate = new Date(today);
-    startDate.setDate(today.getDate() - totalDays + 1);
+    startDate.setDate(today.getDate() - daysSinceMonday - (51 * 7));
+    startDate.setHours(0, 0, 0, 0);
 
-    let currentWeek: { dateStr: string; dayData: HeatmapDay | null; dayOfWeek: number }[] = [];
+    const resultWeeks: { dateStr: string; dayData: HeatmapDay | null; isFuture: boolean }[][] = [];
+    const months: { label: string; weekIndex: number }[] = [];
     let lastMonth = -1;
 
-    for (let i = 0; i < totalDays; i++) {
-      const d = new Date(startDate);
-      d.setDate(startDate.getDate() + i);
-      const dateStr = d.toISOString().split('T')[0];
-      const dayData = dataMap.get(dateStr) || null;
-      const dayOfWeek = d.getDay(); // 0 is Sunday, 1 is Monday...
+    const cursor = new Date(startDate);
 
-      if (d.getMonth() !== lastMonth && currentWeek.length === 0) {
-        lastMonth = d.getMonth();
-        const monthShort = d.toLocaleString('default', { month: 'short' });
-        months.push({ label: monthShort, weekIndex: resultWeeks.length });
+    for (let w = 0; w < 52; w++) {
+      const week: { dateStr: string; dayData: HeatmapDay | null; isFuture: boolean }[] = [];
+
+      for (let d = 0; d < 7; d++) {
+        const dateStr = cursor.toISOString().split('T')[0];
+        const isFuture = cursor > today;
+        const dayData = dataMap.get(dateStr) || null;
+
+        if (cursor.getMonth() !== lastMonth) {
+          lastMonth = cursor.getMonth();
+          const monthShort = cursor.toLocaleString('default', { month: 'short' });
+          if (w < 50) {
+            months.push({ label: monthShort, weekIndex: w });
+          }
+        }
+
+        week.push({ dateStr, dayData, isFuture });
+        cursor.setDate(cursor.getDate() + 1);
       }
-
-      currentWeek.push({ dateStr, dayData, dayOfWeek });
-
-      if (currentWeek.length === 7) {
-        resultWeeks.push(currentWeek);
-        currentWeek = [];
-      }
-    }
-
-    if (currentWeek.length > 0) {
-      resultWeeks.push(currentWeek);
+      resultWeeks.push(week);
     }
 
     return { weeks: resultWeeks, monthLabels: months };
@@ -71,15 +74,24 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   const getColorClass = (level: number) => {
     switch (level) {
       case 1:
-        return 'bg-blue-900 border-blue-800';
+        return 'bg-blue-900/90 border-blue-700/60';
       case 2:
-        return 'bg-blue-700 border-blue-600';
+        return 'bg-blue-700 border-blue-500';
       case 3:
         return 'bg-blue-500 border-blue-400';
       case 4:
         return 'bg-blue-400 border-blue-300';
       default:
         return 'bg-[#141d2f] border-[#1d2942]';
+    }
+  };
+
+  const formatTooltipDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr + 'T00:00:00Z');
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
     }
   };
 
@@ -112,19 +124,23 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 
       {/* Grid Container */}
       <div className="overflow-x-auto pb-2">
-        <div className="min-w-[620px]">
-          {/* Month Labels */}
-          <div className="flex text-[10px] text-[#64748b] mb-1 pl-8 gap-[11px]">
+        <div className="min-w-[760px]">
+          {/* Month Labels Positioned Accurately Above Columns */}
+          <div className="relative h-4 mb-1.5 ml-8 text-[10px] text-[#64748b]">
             {monthLabels.map((m, idx) => (
-              <span key={idx} className="w-8 text-left">
+              <span
+                key={idx}
+                className="absolute whitespace-nowrap"
+                style={{ left: `${m.weekIndex * 14}px` }}
+              >
                 {m.label}
               </span>
             ))}
           </div>
 
           <div className="flex gap-2">
-            {/* Weekday Labels */}
-            <div className="flex flex-col justify-between text-[10px] text-[#64748b] py-0.5 select-none w-6 shrink-0">
+            {/* Weekday Labels (Mon, Wed, Fri, Sun mapped to rows 0, 2, 4, 6) */}
+            <div className="flex flex-col justify-between text-[10px] text-[#64748b] py-0.5 select-none w-6 shrink-0 h-[95px]">
               <span>Mon</span>
               <span>Wed</span>
               <span>Fri</span>
@@ -136,10 +152,30 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
               {weeks.map((week, wIdx) => (
                 <div key={wIdx} className="flex flex-col gap-[3px]">
                   {week.map((day, dIdx) => {
-                    const level = day.dayData?.level || 0;
+                    if (day.isFuture) {
+                      return (
+                        <div
+                          key={dIdx}
+                          className="w-[11px] h-[11px] opacity-0 pointer-events-none"
+                        />
+                      );
+                    }
+
                     const solved = day.dayData?.problems_solved || 0;
                     const subs = day.dayData?.submissions || 0;
-                    const titleText = `${day.dateStr}: ${solved} problems solved, ${subs} submissions`;
+                    const totalCount = day.dayData?.count || (solved > 0 ? solved : subs);
+
+                    let level = day.dayData?.level || 0;
+                    if (!level && totalCount > 0) {
+                      if (totalCount >= 10) level = 4;
+                      else if (totalCount >= 6) level = 3;
+                      else if (totalCount >= 3) level = 2;
+                      else if (totalCount >= 1) level = 1;
+                    }
+
+                    const titleText = totalCount > 0
+                      ? `${formatTooltipDate(day.dateStr)}: ${solved} solved, ${subs} submissions`
+                      : `${formatTooltipDate(day.dateStr)}: No activity recorded`;
 
                     return (
                       <div
@@ -163,8 +199,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
         <span>Less activity</span>
         <div className="flex gap-1 items-center">
           <div className="w-2.5 h-2.5 rounded-[2px] bg-[#141d2f] border border-[#1d2942]" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-900 border border-blue-800" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-700 border border-blue-600" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-900/90 border border-blue-700/60" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-700 border border-blue-500" />
           <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-500 border border-blue-400" />
           <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-400 border border-blue-300" />
         </div>

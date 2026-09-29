@@ -158,6 +158,17 @@ export const App: React.FC = () => {
     loadAllData();
   }, [loadAllData]);
 
+  // Periodic automatic background refresh (every 2 minutes)
+  useEffect(() => {
+    if (authStatus !== 'authenticated') return;
+
+    const interval = setInterval(() => {
+      loadAllData();
+    }, 2 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [authStatus, loadAllData]);
+
   // Sync All
   const handleSyncAll = async () => {
     setIsSyncing(true);

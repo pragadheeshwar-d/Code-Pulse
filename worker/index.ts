@@ -9,6 +9,13 @@ import { SyncService } from './services/sync';
 
 const app = new Hono<AppEnv>();
 
+app.use('*', async (c, next) => {
+  await next();
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('X-Frame-Options', 'DENY');
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+});
+
 app.use('/api/*', cors());
 
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
