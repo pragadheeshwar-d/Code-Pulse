@@ -108,14 +108,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between p-2 rounded-lg bg-[#111929] border border-[#1d293d]">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-semibold text-xs shrink-0">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'C'}
+              {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
             </div>
             <div className="flex flex-col text-left truncate">
               <span className="text-xs font-semibold text-white truncate">
-                {user?.name || 'Developer'}
+                {user?.name || (user?.email ? user.email.split('@')[0] : 'User')}
               </span>
               <span className="text-[11px] text-[#64748b] truncate">
-                {user?.email || (hasToken ? 'Signed In' : 'Local Profile')}
+                {user?.email || (hasToken ? 'Active Session' : 'Local Profile')}
               </span>
             </div>
           </div>

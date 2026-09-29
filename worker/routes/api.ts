@@ -24,36 +24,41 @@ app.get('/profile', async (c) => {
   const userId = c.get('userId');
   const db = c.env.DB;
   const user = await db.prepare(
-    `SELECT u.id, u.name, u.email, s.auto_sync_interval, s.theme, s.notifications_enabled 
-     FROM users u LEFT JOIN user_settings s ON u.id = s.user_id WHERE u.id = ?`
+    `SELECT id, name, email, created_at, updated_at FROM users WHERE id = ?`
   ).bind(userId).first();
-  return c.json({ success: true, data: user });
+  const settings = await db.prepare(
+    `SELECT id, user_id, auto_sync_interval, theme, notifications_enabled, updated_at FROM user_settings WHERE user_id = ?`
+  ).bind(userId).first();
+  return c.json({ success: true, data: { user, settings } });
 });
 
 app.patch('/profile', async (c) => {
   const userId = c.get('userId');
   const body = await c.req.json();
   const db = c.env.DB;
+  const now = new Date().toISOString();
   
-  if (body.name) {
-    await db.prepare('UPDATE users SET name = ?, updated_at = ? WHERE id = ?').bind(body.name, new Date().toISOString(), userId).run();
+  if (body.name || body.email) {
+    await db.prepare('UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email), updated_at = ? WHERE id = ?').bind(body.name || null, body.email || null, now, userId).run();
   }
   
-  if (body.settings) {
-    const { auto_sync_interval, theme, notifications_enabled } = body.settings;
-    const now = new Date().toISOString();
+  if (body.settings || body.auto_sync_interval || body.theme || body.notifications_enabled !== undefined) {
+    const s = body.settings || body;
     await db.prepare(
       `INSERT INTO user_settings (id, user_id, auto_sync_interval, theme, notifications_enabled, updated_at) 
        VALUES (?, ?, ?, ?, ?, ?) 
        ON CONFLICT(user_id) DO UPDATE SET 
-       auto_sync_interval = COALESCE(excluded.auto_sync_interval, auto_sync_interval), 
-       theme = COALESCE(excluded.theme, theme), 
-       notifications_enabled = COALESCE(excluded.notifications_enabled, notifications_enabled), 
+       auto_sync_interval = COALESCE(excluded.auto_sync_interval, user_settings.auto_sync_interval), 
+       theme = COALESCE(excluded.theme, user_settings.theme), 
+       notifications_enabled = COALESCE(excluded.notifications_enabled, user_settings.notifications_enabled), 
        updated_at = excluded.updated_at`
-    ).bind(crypto.randomUUID(), userId, auto_sync_interval || '12h', theme || 'dark', notifications_enabled !== undefined ? notifications_enabled : 1, now).run();
+    ).bind(crypto.randomUUID(), userId, s.auto_sync_interval || '12h', s.theme || 'dark', s.notifications_enabled !== undefined ? s.notifications_enabled : 1, now).run();
   }
   
-  return c.json({ success: true, data: { message: 'Profile updated' } });
+  const updatedUser = await db.prepare('SELECT id, name, email, created_at, updated_at FROM users WHERE id = ?').bind(userId).first();
+  const updatedSettings = await db.prepare('SELECT id, user_id, auto_sync_interval, theme, notifications_enabled, updated_at FROM user_settings WHERE user_id = ?').bind(userId).first();
+
+  return c.json({ success: true, data: { user: updatedUser, settings: updatedSettings } });
 });
 
 app.get('/platforms', async (c) => {

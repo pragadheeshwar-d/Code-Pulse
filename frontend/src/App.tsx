@@ -107,8 +107,10 @@ export const App: React.FC = () => {
       ]);
 
       if (profileRes) {
-        setUser(profileRes.user);
-        setSettings(profileRes.settings);
+        const u = profileRes.user || ((profileRes as any).id ? (profileRes as any) : null);
+        const s = profileRes.settings || ((profileRes as any).auto_sync_interval ? (profileRes as any) : null);
+        if (u) setUser(u);
+        if (s) setSettings(s);
       }
       if (platformsRes) setPlatforms(platformsRes);
       if (statsRes) setOverview(statsRes);

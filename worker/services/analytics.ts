@@ -153,39 +153,51 @@ export class AnalyticsService {
       if (snap) totalSolvedAllTime += snap.total_solved || 0;
     }
 
-    let dateCondition = '';
-    const params: any[] = [userId];
-    if (days > 0) {
-      dateCondition = `AND activity_date >= date('now', '-' || ? || ' days')`;
-      params.push(days);
-    }
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const windowDays = days > 0 ? days : 365;
+    const startDate = new Date(now.getTime() - windowDays * 86400000);
+    const startDateStr = startDate.toISOString().split('T')[0];
 
-    const { results: history } = await this.db.prepare(`
-      SELECT activity_date as date, SUM(problems_solved) as problems_solved
+    const { results: rows } = await this.db.prepare(`
+      SELECT ar.activity_date, SUM(ar.problems_solved) as daily_solved
       FROM activity_records ar
       JOIN platform_accounts pa ON pa.user_id = ar.user_id AND pa.platform = ar.platform AND pa.connection_status = 'connected'
-      WHERE ar.user_id = ? ${dateCondition}
-      GROUP BY activity_date
-      ORDER BY activity_date ASC
-    `).bind(...params).all<{ date: string; problems_solved: number }>();
+      WHERE ar.user_id = ? AND ar.activity_date >= ? AND ar.activity_date <= ?
+      GROUP BY ar.activity_date
+      ORDER BY ar.activity_date ASC
+    `).bind(userId, startDateStr, todayStr).all<{ activity_date: string; daily_solved: number }>();
 
-    let periodSolvedCount = 0;
-    for (const h of history) {
-      periodSolvedCount += h.problems_solved;
+    const activityMap: Record<string, number> = {};
+    let periodSolved = 0;
+    for (const r of rows) {
+      activityMap[r.activity_date] = r.daily_solved || 0;
+      periodSolved += (r.daily_solved || 0);
     }
 
-    let currentCumulative = totalSolvedAllTime - periodSolvedCount;
+    const timeline: string[] = [];
+    const cur = new Date(startDateStr + 'T00:00:00Z');
+    const end = new Date(todayStr + 'T00:00:00Z');
 
-    const timeline = history.map(h => {
-      currentCumulative += h.problems_solved;
+    while (cur <= end) {
+      timeline.push(cur.toISOString().split('T')[0]);
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    const baselineSolved = Math.max(0, totalSolvedAllTime - periodSolved);
+    let runningCumulative = baselineSolved;
+
+    const result = timeline.map(date => {
+      const daily = activityMap[date] || 0;
+      runningCumulative += daily;
       return {
-        date: h.date,
-        daily_solved: h.problems_solved,
-        cumulative_solved: currentCumulative
+        date,
+        daily,
+        cumulative: runningCumulative
       };
     });
 
-    return timeline;
+    return result;
   }
 
   async getCodingActivity(userId: string, platformFilter?: string) {
