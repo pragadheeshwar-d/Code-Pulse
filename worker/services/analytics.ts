@@ -15,64 +15,41 @@ export class AnalyticsService {
     }
   }
 
-  private calculateStreaks(dates: string[]): { current_streak: number; longest_streak: number } {
-    if (!dates || dates.length === 0) return { current_streak: 0, longest_streak: 0 };
+  private calculateStreaks(sortedDateStrings: string[]): { current_streak: number; longest_streak: number } {
+    if (!sortedDateStrings || sortedDateStrings.length === 0) return { current_streak: 0, longest_streak: 0 };
     
-    const sortedDates = [...dates].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-    
-    let current_streak = 0;
-    let longest_streak = 0;
-    let currentCount = 0;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const sorted = Array.from(new Set(sortedDateStrings)).sort();
+    let longest = 0;
+    let tempStreak = 0;
+    let prevDate: Date | null = null;
 
-    let lastDate = new Date(sortedDates[0]);
-    lastDate.setHours(0,0,0,0);
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().split('T')[0];
 
-    let isCurrentActive = false;
-    
-    if (lastDate.getTime() === today.getTime() || lastDate.getTime() === yesterday.getTime()) {
-      isCurrentActive = true;
-      currentCount = 1;
-    } else {
-      currentCount = 1;
-    }
-    
-    longest_streak = 1;
-    
-    for (let i = 1; i < sortedDates.length; i++) {
-      const prevDate = lastDate;
-      const currDate = new Date(sortedDates[i]);
-      currDate.setHours(0,0,0,0);
-      
-      const diffTime = Math.abs(prevDate.getTime() - currDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 1) {
-        currentCount++;
-      } else if (diffDays > 1) {
-        if (isCurrentActive) {
-          current_streak = currentCount;
-          isCurrentActive = false;
+    for (const dateStr of sorted) {
+      const curDate = new Date(dateStr + 'T00:00:00Z');
+      if (prevDate) {
+        const diffDays = Math.round((curDate.getTime() - prevDate.getTime()) / 86400000);
+        if (diffDays === 1) {
+          tempStreak++;
+        } else if (diffDays > 1) {
+          tempStreak = 1;
         }
-        currentCount = 1;
+      } else {
+        tempStreak = 1;
       }
-      
-      if (currentCount > longest_streak) {
-        longest_streak = currentCount;
-      }
-      
-      lastDate = currDate;
+      if (tempStreak > longest) longest = tempStreak;
+      prevDate = curDate;
     }
-    
-    if (isCurrentActive) {
-      current_streak = currentCount;
+
+    const lastDate = sorted[sorted.length - 1];
+    let current = 0;
+    if (lastDate === todayStr || lastDate === yesterdayStr) {
+      current = tempStreak;
     }
-    
-    return { current_streak, longest_streak };
+
+    return { current_streak: current, longest_streak: longest };
   }
 
   async getDashboardOverview(userId: string) {
@@ -131,9 +108,9 @@ export class AnalyticsService {
       has_data: true,
       total_problems: totalSolved,
       active_days: Math.max(activeDatesList.length, maxSnapshotActiveDays),
-      current_streak: Math.max(current_streak, maxSnapshotCurrentStreak),
+      current_streak: activeDatesList.length > 0 ? current_streak : maxSnapshotCurrentStreak,
       longest_streak: Math.max(longest_streak, maxSnapshotLongestStreak),
-      total_submissions,
+      total_submissions: totalSubmissions,
       last_synced_at: latestRecordedAt
     };
   }

@@ -73,12 +73,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const totalSolvedFromPlatforms = platforms.reduce((sum, p) => sum + (p.stats?.total_solved || 0), 0);
   const activeDaysFromPlatforms = Math.max(0, ...platforms.map(p => p.stats?.active_days || 0));
   const currentStreakFromPlatforms = Math.max(0, ...platforms.map(p => p.stats?.current_streak || 0));
+  const longestStreakFromPlatforms = Math.max(0, ...platforms.map(p => p.stats?.longest_streak || 0));
   const totalSubmissionsFromPlatforms = platforms.reduce((sum, p) => sum + (p.stats?.total_submissions || 0), 0);
 
   const effectiveHasData = (overview?.has_data ?? false) || (anyConnected && totalSolvedFromPlatforms > 0);
   const totalProblems = overview?.total_problems ?? (anyConnected && totalSolvedFromPlatforms > 0 ? totalSolvedFromPlatforms : null);
   const activeDays = overview?.active_days ?? (anyConnected && activeDaysFromPlatforms > 0 ? activeDaysFromPlatforms : null);
-  const currentStreak = overview?.current_streak ?? (anyConnected && currentStreakFromPlatforms > 0 ? currentStreakFromPlatforms : null);
+  const currentStreak = overview?.current_streak ?? (anyConnected && currentStreakFromPlatforms >= 0 ? currentStreakFromPlatforms : null);
+  const longestStreak = overview?.longest_streak ?? (anyConnected && longestStreakFromPlatforms > 0 ? longestStreakFromPlatforms : null);
   const totalSubmissions = overview?.total_submissions ?? (anyConnected && totalSubmissionsFromPlatforms > 0 ? totalSubmissionsFromPlatforms : null);
 
   return (
@@ -103,10 +105,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         />
         <MetricCard
           title="Current Streak"
-          value={effectiveHasData && currentStreak !== null && currentStreak !== undefined ? `${currentStreak} days` : null}
+          value={effectiveHasData && currentStreak !== null && currentStreak !== undefined ? `${currentStreak} day${currentStreak === 1 ? '' : 's'}` : null}
           icon={Flame}
           iconColor="text-amber-500"
           hasData={effectiveHasData}
+          badge={effectiveHasData && longestStreak ? `Max: ${longestStreak}d` : undefined}
+          subtitle={effectiveHasData && longestStreak ? `Max streak: ${longestStreak} days` : 'Verified from connected platforms'}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard

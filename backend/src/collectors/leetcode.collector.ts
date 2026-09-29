@@ -256,6 +256,41 @@ export class LeetCodeCollector extends BaseCollector {
       }
     }
 
+    // LeetCode's GraphQL userCalendar.streak field represents the user's MAX / LONGEST streak.
+    // Calculate the authentic CURRENT streak and verify LONGEST streak from the submission calendar dates.
+    const sortedDates = Array.from(new Set(activities.map(a => a.activity_date))).sort();
+    let computedLongest = 0;
+    let tempStreak = 0;
+    let prevDate: Date | null = null;
+
+    for (const dateStr of sortedDates) {
+      const curDate = new Date(dateStr + 'T00:00:00Z');
+      if (prevDate) {
+        const diffDays = Math.round((curDate.getTime() - prevDate.getTime()) / 86400000);
+        if (diffDays === 1) {
+          tempStreak++;
+        } else if (diffDays > 1) {
+          tempStreak = 1;
+        }
+      } else {
+        tempStreak = 1;
+      }
+      if (tempStreak > computedLongest) computedLongest = tempStreak;
+      prevDate = curDate;
+    }
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().split('T')[0];
+    const lastDate = sortedDates[sortedDates.length - 1];
+
+    let computedCurrent = 0;
+    if (lastDate === todayStr || lastDate === yesterdayStr) {
+      computedCurrent = tempStreak;
+    }
+
+    const longestStreak = Math.max(computedLongest, user.userCalendar?.streak || 0);
+
     return {
       platform: 'leetcode',
       username,
@@ -266,8 +301,8 @@ export class LeetCodeCollector extends BaseCollector {
       hard_solved: hardSolved,
       rating,
       rank,
-      current_streak: user.userCalendar?.streak || 0,
-      longest_streak: user.userCalendar?.streak || 0, // LC API gives current streak, we maintain longest in snapshot
+      current_streak: computedCurrent,
+      longest_streak: longestStreak,
       total_submissions: totalSubmissions,
       active_days: user.userCalendar?.totalActiveDays || 0,
       topics,

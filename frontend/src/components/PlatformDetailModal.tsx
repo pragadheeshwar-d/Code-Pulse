@@ -118,6 +118,10 @@ export const PlatformDetailModal: React.FC<PlatformDetailModalProps> = ({
               <p className="text-xl font-bold text-white font-mono mt-1">{stats.current_streak}d</p>
             </div>
             <div className="p-3 bg-[#141d2f] border border-[#1e2a42] rounded-lg">
+              <span className="text-[11px] text-[#8b9cb4]">Max Streak</span>
+              <p className="text-xl font-bold text-amber-400 font-mono mt-1">{stats.longest_streak ?? stats.current_streak}d</p>
+            </div>
+            <div className="p-3 bg-[#141d2f] border border-[#1e2a42] rounded-lg">
               <span className="text-[11px] text-[#8b9cb4]">Active Days</span>
               <p className="text-xl font-bold text-white font-mono mt-1">{stats.active_days}</p>
             </div>

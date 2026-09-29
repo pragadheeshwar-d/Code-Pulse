@@ -55,6 +55,43 @@ export function getCanonicalProfileUrl(platform: PlatformType, username: string)
   }
 }
 
+export function calculateStreaksFromDates(sortedDateStrings: string[]): { current_streak: number; longest_streak: number } {
+  if (!sortedDateStrings || sortedDateStrings.length === 0) return { current_streak: 0, longest_streak: 0 };
+  
+  const sorted = Array.from(new Set(sortedDateStrings)).sort();
+  let longest = 0;
+  let tempStreak = 0;
+  let prevDate: Date | null = null;
+
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().split('T')[0];
+
+  for (const dateStr of sorted) {
+    const curDate = new Date(dateStr + 'T00:00:00Z');
+    if (prevDate) {
+      const diffDays = Math.round((curDate.getTime() - prevDate.getTime()) / 86400000);
+      if (diffDays === 1) {
+        tempStreak++;
+      } else if (diffDays > 1) {
+        tempStreak = 1;
+      }
+    } else {
+      tempStreak = 1;
+    }
+    if (tempStreak > longest) longest = tempStreak;
+    prevDate = curDate;
+  }
+
+  const lastDate = sorted[sorted.length - 1];
+  let current = 0;
+  if (lastDate === todayStr || lastDate === yesterdayStr) {
+    current = tempStreak;
+  }
+
+  return { current_streak: current, longest_streak: longest };
+}
+
 export class PlatformService {
   private syncService = new SyncService();
 
@@ -176,6 +213,21 @@ export class PlatformService {
         LIMIT 1
       `).get(acc.id) as StatSnapshot | undefined;
 
+      let currentStreak = latestSnapshot?.current_streak || 0;
+      let longestStreak = latestSnapshot?.longest_streak || 0;
+
+      const accDates = db.prepare(`
+        SELECT DISTINCT activity_date FROM activity_records
+        WHERE user_id = ? AND platform = ? AND (problems_solved > 0 OR submissions > 0)
+        ORDER BY activity_date ASC
+      `).all(userId, platform) as { activity_date: string }[];
+
+      if (accDates && accDates.length > 0) {
+        const streakCalc = calculateStreaksFromDates(accDates.map(d => d.activity_date));
+        currentStreak = streakCalc.current_streak;
+        longestStreak = Math.max(streakCalc.longest_streak, longestStreak);
+      }
+
       return {
         id: acc.id,
         platform,
@@ -192,8 +244,8 @@ export class PlatformService {
           hard_solved: latestSnapshot.hard_solved,
           rating: latestSnapshot.rating,
           rank: latestSnapshot.rank,
-          current_streak: latestSnapshot.current_streak,
-          longest_streak: latestSnapshot.longest_streak,
+          current_streak: currentStreak,
+          longest_streak: longestStreak,
           total_submissions: latestSnapshot.total_submissions,
           active_days: latestSnapshot.active_days,
           recorded_at: latestSnapshot.recorded_at

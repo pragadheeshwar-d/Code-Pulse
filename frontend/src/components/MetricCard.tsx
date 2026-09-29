@@ -8,6 +8,8 @@ interface MetricCardProps {
   iconColor?: string;
   hasData: boolean;
   onConnectClick?: () => void;
+  badge?: string;
+  subtitle?: string;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -16,7 +18,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   icon: Icon,
   iconColor = 'text-blue-400',
   hasData,
-  onConnectClick
+  onConnectClick,
+  badge,
+  subtitle
 }) => {
   return (
     <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 flex flex-col justify-between hover:border-[#2a3754] transition-all group">
@@ -27,7 +31,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           </div>
           <span className="text-sm font-medium text-[#94a3b8]">{title}</span>
         </div>
-        <TrendingUp className="w-4 h-4 text-[#475569] group-hover:text-blue-400 transition-colors" />
+        {badge ? (
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium font-mono">
+            {badge}
+          </span>
+        ) : (
+          <TrendingUp className="w-4 h-4 text-[#475569] group-hover:text-blue-400 transition-colors" />
+        )}
       </div>
 
       <div className="mt-4">
@@ -37,7 +47,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         
         {hasData ? (
           <p className="text-xs text-[#64748b] mt-1.5 flex items-center gap-1">
-            <span>Verified from connected platforms</span>
+            <span>{subtitle || 'Verified from connected platforms'}</span>
           </p>
         ) : (
           <button

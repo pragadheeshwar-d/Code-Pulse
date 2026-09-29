@@ -54,6 +54,43 @@ export function getCanonicalProfileUrl(platform: PlatformType, username: string)
   }
 }
 
+export function calculateStreaksFromDates(sortedDateStrings: string[]): { current_streak: number; longest_streak: number } {
+  if (!sortedDateStrings || sortedDateStrings.length === 0) return { current_streak: 0, longest_streak: 0 };
+  
+  const sorted = Array.from(new Set(sortedDateStrings)).sort();
+  let longest = 0;
+  let tempStreak = 0;
+  let prevDate: Date | null = null;
+
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().split('T')[0];
+
+  for (const dateStr of sorted) {
+    const curDate = new Date(dateStr + 'T00:00:00Z');
+    if (prevDate) {
+      const diffDays = Math.round((curDate.getTime() - prevDate.getTime()) / 86400000);
+      if (diffDays === 1) {
+        tempStreak++;
+      } else if (diffDays > 1) {
+        tempStreak = 1;
+      }
+    } else {
+      tempStreak = 1;
+    }
+    if (tempStreak > longest) longest = tempStreak;
+    prevDate = curDate;
+  }
+
+  const lastDate = sorted[sorted.length - 1];
+  let current = 0;
+  if (lastDate === todayStr || lastDate === yesterdayStr) {
+    current = tempStreak;
+  }
+
+  return { current_streak: current, longest_streak: longest };
+}
+
 export class PlatformService {
   constructor(private db: D1Database) {}
 
@@ -133,8 +170,23 @@ export class PlatformService {
       if (acc && acc.connection_status === 'connected') {
         const snap = await this.db.prepare(`
           SELECT * FROM stat_snapshots WHERE platform_account_id = ? ORDER BY recorded_at DESC LIMIT 1
-        `).bind(acc.id).first();
+        `).bind(acc.id).first<any>();
         
+        let statsObj: any = snap ? { ...snap } : null;
+        if (statsObj) {
+          const { results: accDates } = await this.db.prepare(`
+            SELECT DISTINCT activity_date FROM activity_records 
+            WHERE user_id = ? AND platform = ? AND (problems_solved > 0 OR submissions > 0)
+            ORDER BY activity_date ASC
+          `).bind(userId, p).all<{ activity_date: string }>();
+
+          if (accDates && accDates.length > 0) {
+            const streakCalc = calculateStreaksFromDates(accDates.map(d => d.activity_date));
+            statsObj.current_streak = streakCalc.current_streak;
+            statsObj.longest_streak = Math.max(streakCalc.longest_streak, statsObj.longest_streak || 0);
+          }
+        }
+
         results.push({
           id: acc.id,
           platform: p,
@@ -144,7 +196,7 @@ export class PlatformService {
           last_synced_at: acc.last_synced_at,
           connection_status: acc.connection_status,
           last_error: acc.last_error || null,
-          stats: snap || null
+          stats: statsObj
         });
       } else {
         results.push({

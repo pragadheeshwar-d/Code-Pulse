@@ -129,9 +129,16 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#8b9cb4]">Streak</span>
+            <span className="text-[#8b9cb4]">Current Streak</span>
             <span className="font-mono font-medium text-white">
-              {isConnected && data.stats ? `${data.stats.current_streak} days` : '—'}
+              {isConnected && data.stats ? `${data.stats.current_streak}d` : '—'}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-[#8b9cb4]">Max Streak</span>
+            <span className="font-mono font-medium text-amber-400">
+              {isConnected && data.stats ? `${data.stats.longest_streak ?? data.stats.current_streak}d` : '—'}
             </span>
           </div>
 

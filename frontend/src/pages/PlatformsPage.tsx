@@ -108,6 +108,7 @@ export const PlatformsPage: React.FC<PlatformsPageProps> = ({
                     <div className="p-3 bg-[#141d2f] border border-[#1e293f] rounded-lg text-center">
                       <span className="text-[11px] text-[#8b9cb4]">Streak</span>
                       <p className="text-lg font-bold text-white font-mono mt-0.5">{stats.current_streak}d</p>
+                      <span className="text-[10px] text-amber-400 font-mono block">Max: {stats.longest_streak ?? stats.current_streak}d</span>
                     </div>
                   </div>
                 ) : (

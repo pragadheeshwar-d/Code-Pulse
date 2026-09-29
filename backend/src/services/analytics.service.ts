@@ -72,7 +72,7 @@ export class AnalyticsService {
 
     // Cross-verify streak and active days calculations with platform verified metrics
     const finalLongestStreak = Math.max(longestStreak, maxSnapshotLongestStreak);
-    const finalCurrentStreak = Math.max(currentStreak, maxSnapshotCurrentStreak);
+    const finalCurrentStreak = activeDatesList.length > 0 ? currentStreak : maxSnapshotCurrentStreak;
     const finalActiveDays = Math.max(activeDatesList.length, maxSnapshotActiveDays);
 
     return {
