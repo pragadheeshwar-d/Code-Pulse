@@ -4,19 +4,70 @@ import { SyncService } from './sync.service.js';
 import { PlatformType, PlatformAccount, StatSnapshot } from '../types/index.js';
 import crypto from 'crypto';
 
+export function extractUsername(platform: PlatformType, input: string): string {
+  if (!input) return '';
+  let val = input.trim();
+  if (!val) return '';
+
+  val = val.split('?')[0].split('#')[0].replace(/\/+$/, '');
+
+  if (val.includes('/') || val.includes('.')) {
+    if (platform === 'leetcode') {
+      const match = val.match(/leetcode\.(?:com|cn)\/(?:u\/)?([^/]+)/i);
+      if (match && match[1]) return match[1].trim();
+    } else if (platform === 'codechef') {
+      const match = val.match(/codechef\.com\/users\/([^/]+)/i);
+      if (match && match[1]) return match[1].trim();
+    } else if (platform === 'codeforces') {
+      const match = val.match(/codeforces\.com\/profile\/([^/]+)/i);
+      if (match && match[1]) return match[1].trim();
+    } else if (platform === 'geeksforgeeks') {
+      const match = val.match(/geeksforgeeks\.org\/(?:profile|user)\/([^/]+)/i);
+      if (match && match[1]) return match[1].trim();
+    }
+
+    const segments = val.split('/').filter(Boolean);
+    if (segments.length > 0) {
+      const last = segments[segments.length - 1].trim();
+      const reserved = ['u', 'profile', 'users', 'user', 'practice', 'leetcode', 'codechef', 'codeforces', 'geeksforgeeks', 'www'];
+      if (last && !reserved.includes(last.toLowerCase())) {
+        return last;
+      }
+    }
+  }
+
+  return val.replace(/^@+/, '').trim();
+}
+
+export function getCanonicalProfileUrl(platform: PlatformType, username: string): string {
+  const handle = username.trim().replace(/^@+/, '');
+  switch (platform) {
+    case 'leetcode':
+      return `https://leetcode.com/u/${handle}/`;
+    case 'codeforces':
+      return `https://codeforces.com/profile/${handle}`;
+    case 'codechef':
+      return `https://www.codechef.com/users/${handle}`;
+    case 'geeksforgeeks':
+      return `https://www.geeksforgeeks.org/profile/${handle}`;
+    default:
+      return `https://${platform}.com/${handle}`;
+  }
+}
+
 export class PlatformService {
   private syncService = new SyncService();
 
-  async connectPlatform(userId: string, platform: PlatformType, username: string): Promise<{ account: PlatformAccount; syncResult: any }> {
-    const trimmedUsername = username.trim();
+  async connectPlatform(userId: string, platform: PlatformType, usernameOrUrl: string): Promise<{ account: PlatformAccount; syncResult: any }> {
+    const trimmedUsername = extractUsername(platform, usernameOrUrl);
     if (!trimmedUsername) {
-      throw new Error('Username cannot be empty');
+      throw new Error(`Please provide a valid profile link or username for ${platform}`);
     }
 
     const collector = getCollector(platform);
     const isValid = await collector.validateUsername(trimmedUsername);
     if (!isValid) {
-      throw new Error(`Could not verify username '${trimmedUsername}' on ${platform}. Please check the spelling.`);
+      throw new Error(`Could not verify username '${trimmedUsername}' on ${platform}. Please check the profile link or spelling.`);
     }
 
     const db = getDb();
@@ -26,22 +77,7 @@ export class PlatformService {
     `).get(userId, platform) as PlatformAccount | undefined;
 
     let accountId: string;
-    let profileUrl = '';
-
-    switch (platform) {
-      case 'leetcode':
-        profileUrl = `https://leetcode.com/${trimmedUsername}/`;
-        break;
-      case 'codeforces':
-        profileUrl = `https://codeforces.com/profile/${trimmedUsername}`;
-        break;
-      case 'codechef':
-        profileUrl = `https://www.codechef.com/users/${trimmedUsername}`;
-        break;
-      case 'geeksforgeeks':
-        profileUrl = `https://www.geeksforgeeks.org/profile/${trimmedUsername}`;
-        break;
-    }
+    const profileUrl = getCanonicalProfileUrl(platform, trimmedUsername);
 
     if (existing) {
       accountId = existing.id;

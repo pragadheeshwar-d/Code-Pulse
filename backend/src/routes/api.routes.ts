@@ -84,13 +84,17 @@ router.get('/platforms', async (req: Request, res: Response) => {
  */
 const ConnectSchema = z.object({
   platform: z.enum(['leetcode', 'codechef', 'geeksforgeeks', 'codeforces']),
-  username: z.string().min(1, 'Username is required').max(100)
+  username: z.string().min(1, 'Profile link or username is required').max(500)
 });
 
 router.post('/platforms/connect', async (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
-    const validated = ConnectSchema.parse(req.body);
+    const body = {
+      platform: req.body.platform,
+      username: req.body.username || req.body.url || req.body.profileUrl || req.body.profile_url
+    };
+    const validated = ConnectSchema.parse(body);
     const result = await platformService.connectPlatform(userId, validated.platform, validated.username);
     res.json({ success: true, data: result });
   } catch (err: any) {

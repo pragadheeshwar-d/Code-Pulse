@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, CheckCircle, Clock, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Settings, Save, CheckCircle, Clock, ShieldCheck, AlertCircle, ExternalLink } from 'lucide-react';
 import { UserProfile, UserSettings, SyncLog, PlatformCardData, PlatformType } from '../types';
 
 interface SettingsPageProps {
@@ -9,6 +9,7 @@ interface SettingsPageProps {
   syncLogs: SyncLog[];
   onUpdateProfile: (data: Partial<UserProfile & UserSettings>) => Promise<void>;
   onDisconnectPlatform: (platform: PlatformType) => Promise<void>;
+  onConnectPlatform?: (platform: PlatformType) => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -17,7 +18,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   platforms,
   syncLogs,
   onUpdateProfile,
-  onDisconnectPlatform
+  onDisconnectPlatform,
+  onConnectPlatform
 }) => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -148,15 +150,34 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     )}
                   </div>
 
-                  <div>
-                    {p.connected && (
+                  <div className="flex items-center gap-3">
+                    {p.connected && p.profile_url && (
+                      <a
+                        href={p.profile_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                        title="View public profile"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Profile</span>
+                      </a>
+                    )}
+                    {p.connected ? (
                       <button
                         onClick={() => onDisconnectPlatform(p.platform)}
                         className="text-xs text-rose-400 hover:text-rose-300 transition-colors"
                       >
                         Disconnect
                       </button>
-                    )}
+                    ) : onConnectPlatform ? (
+                      <button
+                        onClick={() => onConnectPlatform(p.platform)}
+                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                      >
+                        Connect
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               ))}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Loader2, AlertCircle, CheckCircle, Link2, ExternalLink } from 'lucide-react';
 import { PlatformType } from '../types';
+import { extractUsername, detectPlatformFromUrl, PLATFORM_CONFIGS } from '../utils/platform';
 
 interface ConnectModalProps {
   isOpen: boolean;
@@ -16,24 +17,41 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
   onConnect
 }) => {
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>(defaultPlatform);
-  const [username, setUsername] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   React.useEffect(() => {
     setSelectedPlatform(defaultPlatform);
-    setUsername('');
+    setInputValue('');
     setError(null);
     setSuccess(false);
   }, [defaultPlatform, isOpen]);
 
   if (!isOpen) return null;
 
+  const currentConfig = PLATFORM_CONFIGS.find(p => p.id === selectedPlatform) || PLATFORM_CONFIGS[0];
+  const detectedUsername = extractUsername(selectedPlatform, inputValue);
+  const isUrlInput = inputValue.trim().includes('/') || inputValue.trim().includes('.');
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputValue(val);
+    setError(null);
+
+    // Auto-switch platform if the pasted URL belongs to a different supported platform
+    const detected = detectPlatformFromUrl(val);
+    if (detected && detected !== selectedPlatform) {
+      setSelectedPlatform(detected);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) {
-      setError('Please enter a username');
+    const cleanUsername = extractUsername(selectedPlatform, inputValue);
+    if (!cleanUsername) {
+      setError(`Please enter a valid ${currentConfig.name} profile link or username`);
       return;
     }
 
@@ -41,7 +59,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
     setError(null);
 
     try {
-      await onConnect(selectedPlatform, username.trim());
+      await onConnect(selectedPlatform, cleanUsername);
       setSuccess(true);
       setTimeout(() => {
         onClose();
@@ -52,35 +70,6 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
       setLoading(false);
     }
   };
-
-  const platforms: { id: PlatformType; name: string; placeholder: string; note: string }[] = [
-    {
-      id: 'leetcode',
-      name: 'LeetCode',
-      placeholder: 'Enter your LeetCode username',
-      note: 'Connects to official LeetCode GraphQL public profile'
-    },
-    {
-      id: 'codeforces',
-      name: 'Codeforces',
-      placeholder: 'Enter your Codeforces handle',
-      note: 'Connects to official Codeforces REST API'
-    },
-    {
-      id: 'codechef',
-      name: 'CodeChef',
-      placeholder: 'Enter your CodeChef handle',
-      note: 'Fetches public CodeChef rating & problem solving history'
-    },
-    {
-      id: 'geeksforgeeks',
-      name: 'GeeksforGeeks',
-      placeholder: 'Enter your GeeksforGeeks handle',
-      note: 'Connects to public GeeksforGeeks profile'
-    }
-  ];
-
-  const currentConfig = platforms.find(p => p.id === selectedPlatform)!;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
@@ -95,12 +84,12 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
 
         <h3 className="text-lg font-bold text-white tracking-tight">Connect Coding Platform</h3>
         <p className="text-xs text-[#8b9cb4] mt-1">
-          Enter your public handle to dynamically collect and track your real statistics.
+          Paste your public profile link or enter your username to automatically track your verified statistics.
         </p>
 
         {/* Platform Selection */}
         <div className="grid grid-cols-2 gap-2 mt-5">
-          {platforms.map(p => (
+          {PLATFORM_CONFIGS.map(p => (
             <button
               key={p.id}
               type="button"
@@ -123,17 +112,31 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
             <label className="block text-xs font-medium text-[#cbd5e1] mb-1.5">
-              {currentConfig.name} Username / Handle
+              {currentConfig.name} Profile Link or Username
             </label>
-            <input
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder={currentConfig.placeholder}
-              disabled={loading}
-              className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-sm text-white placeholder-[#475569] focus:outline-none focus:border-blue-500 transition-colors font-mono"
-            />
-            <p className="text-[11px] text-[#64748b] mt-1.5">{currentConfig.note}</p>
+            <div className="relative">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                placeholder={currentConfig.placeholder}
+                disabled={loading}
+                className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-sm text-white placeholder-[#475569] focus:outline-none focus:border-blue-500 transition-colors font-mono"
+              />
+            </div>
+
+            {/* Live Detected Handle preview */}
+            {inputValue.trim() && isUrlInput && detectedUsername && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1.5 rounded-md font-mono">
+                <Link2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                <span className="text-[#8b9cb4]">Detected Handle:</span>
+                <span className="text-white font-semibold">@{detectedUsername}</span>
+              </div>
+            )}
+
+            <p className="text-[11px] text-[#64748b] mt-1.5">
+              Paste URL (e.g. <span className="text-[#8b9cb4] font-mono">{currentConfig.exampleUrl}</span>) or your handle.
+            </p>
           </div>
 
           {/* Error Banner */}
@@ -148,7 +151,9 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
           {success && (
             <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center gap-2 text-xs text-emerald-400">
               <CheckCircle className="w-4 h-4 shrink-0" />
-              <span>Account verified & connected successfully!</span>
+              <span>
+                Account {detectedUsername ? `@${detectedUsername}` : ''} verified & connected successfully!
+              </span>
             </div>
           )}
 
@@ -164,7 +169,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={loading || !username.trim()}
+              disabled={loading || !inputValue.trim()}
               className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800/40 disabled:text-[#64748b] text-white transition-all shadow-sm"
             >
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -176,3 +181,4 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
     </div>
   );
 };
+

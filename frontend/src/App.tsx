@@ -404,6 +404,7 @@ export const App: React.FC = () => {
               syncLogs={syncLogs}
               onUpdateProfile={handleUpdateProfile}
               onDisconnectPlatform={handleDisconnectPlatform}
+              onConnectPlatform={openConnectModal}
             />
           )}
         </main>

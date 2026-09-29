@@ -71,13 +71,14 @@ app.get('/platforms', async (c) => {
 app.post('/platforms/connect', async (c) => {
   try {
     const userId = c.get('userId');
-    const { platform, username } = await c.req.json();
-    if (!platform || !username) {
-      return c.json({ success: false, error: 'Platform and username are required' }, 400);
+    const body = await c.req.json();
+    const platform = body.platform;
+    const rawInput = body.username || body.url || body.profileUrl || body.profile_url;
+    if (!platform || !rawInput) {
+      return c.json({ success: false, error: 'Platform and profile link or username are required' }, 400);
     }
-    const cleanUsername = String(username).trim();
     const platformService = new PlatformService(c.env.DB);
-    const data = await platformService.connectPlatform(userId, platform as any, cleanUsername);
+    const data = await platformService.connectPlatform(userId, platform as any, String(rawInput));
     return c.json({ success: true, data });
   } catch (err: any) {
     return c.json({ 
