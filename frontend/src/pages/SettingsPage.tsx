@@ -20,7 +20,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   onDisconnectPlatform
 }) => {
   const [name, setName] = useState(user?.name || '');
-  const [headline, setHeadline] = useState(user?.headline || '');
   const [email, setEmail] = useState(user?.email || '');
   const [autoSync, setAutoSync] = useState(settings?.auto_sync_interval || '12h');
   const [saving, setSaving] = useState(false);
@@ -29,7 +28,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   useEffect(() => {
     if (user) {
       setName(user.name || '');
-      setHeadline(user.headline || '');
       setEmail(user.email || '');
     }
   }, [user]);
@@ -48,7 +46,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     try {
       await onUpdateProfile({
         name,
-        headline,
         email,
         auto_sync_interval: autoSync as any
       });
@@ -89,24 +86,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#cbd5e1] mb-1.5">Headline / Tagline</label>
+                <label className="block text-xs font-medium text-[#cbd5e1] mb-1.5">Email Address</label>
                 <input
-                  type="text"
-                  value={headline}
-                  onChange={e => setHeadline(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                   className="w-full px-3 py-2 bg-[#141d2f] border border-[#22314e] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-[#cbd5e1] mb-1.5">Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-[#141d2f] border border-[#22314e] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
-              />
             </div>
 
             <div className="pt-3 border-t border-[#1c263c]">

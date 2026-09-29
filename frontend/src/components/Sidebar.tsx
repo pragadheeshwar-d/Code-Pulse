@@ -115,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {user?.name || 'Developer'}
               </span>
               <span className="text-[11px] text-[#64748b] truncate">
-                {user?.headline || (hasToken ? 'Signed In' : 'Local Profile')}
+                {user?.email || (hasToken ? 'Signed In' : 'Local Profile')}
               </span>
             </div>
           </div>

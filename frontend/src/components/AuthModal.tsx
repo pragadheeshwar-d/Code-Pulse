@@ -15,7 +15,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [headline, setHeadline] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,8 +34,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         const res = await api.register({
           name: name.trim(),
           email: email.trim(),
-          password,
-          headline: headline.trim() || undefined
+          password
         });
 
         setAuthToken(res.token);
@@ -171,22 +169,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               />
             </div>
           </div>
-
-          {isRegister && (
-            <div>
-              <label className="block text-xs font-medium text-gray-300 mb-1">Headline (Optional)</label>
-              <div className="relative">
-                <Briefcase className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                <input
-                  type="text"
-                  value={headline}
-                  onChange={(e) => setHeadline(e.target.value)}
-                  placeholder="e.g. Competitive Programmer | Full Stack Dev"
-                  className="w-full bg-[#141d30] border border-[#1e2a42] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
-                />
-              </div>
-            </div>
-          )}
 
           <button
             type="submit"
