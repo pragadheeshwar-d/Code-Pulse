@@ -169,6 +169,25 @@ export const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [authStatus, loadAllData]);
 
+  // Auto-sync connected platforms on load if never synced or stale (>10m)
+  const initialSyncRef = React.useRef(false);
+  useEffect(() => {
+    if (authStatus !== 'authenticated' || platforms.length === 0 || initialSyncRef.current) return;
+    const connected = platforms.filter(p => p.connected);
+    if (connected.length === 0) return;
+
+    const needsSync = connected.some(p => {
+      if (!p.last_synced_at) return true;
+      const diffMs = Date.now() - new Date(p.last_synced_at).getTime();
+      return diffMs > 10 * 60 * 1000;
+    });
+
+    if (needsSync && !isSyncing) {
+      initialSyncRef.current = true;
+      handleSyncAll();
+    }
+  }, [authStatus, platforms, isSyncing]);
+
   // Sync All
   const handleSyncAll = async () => {
     setIsSyncing(true);
