@@ -18,7 +18,7 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
     : [{ name: 'Empty', value: 1, color: '#1a2336' }];
 
   return (
-    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 flex flex-col justify-between">
+    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -32,9 +32,9 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-4 my-auto">
+      <div className="flex flex-col min-[360px]:flex-row items-center justify-between gap-4 my-auto">
         {/* Donut Chart */}
-        <div className="w-28 h-28 relative flex items-center justify-center shrink-0">
+        <div className="w-28 h-28 relative flex items-center justify-center shrink-0 mx-auto min-[360px]:mx-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Tooltip
@@ -80,14 +80,14 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
         </div>
 
         {/* Legend */}
-        <div className="space-y-2 text-xs flex-1">
+        <div className="space-y-2 text-xs w-full 2xs:flex-1">
           {/* Easy */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               <span className="text-[#94a3b8]">Easy</span>
             </div>
-            <span className="font-mono text-white">
+            <span className="font-mono text-white text-right">
               {hasData ? `${data.easy.count.toLocaleString()} (${data.easy.percentage}%)` : '— (—%)'}
             </span>
           </div>
@@ -95,10 +95,10 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
           {/* Medium */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
               <span className="text-[#94a3b8]">Medium</span>
             </div>
-            <span className="font-mono text-white">
+            <span className="font-mono text-white text-right">
               {hasData ? `${data.medium.count.toLocaleString()} (${data.medium.percentage}%)` : '— (—%)'}
             </span>
           </div>
@@ -106,10 +106,10 @@ export const DifficultyChart: React.FC<DifficultyChartProps> = ({ data }) => {
           {/* Hard */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
               <span className="text-[#94a3b8]">Hard</span>
             </div>
-            <span className="font-mono text-white">
+            <span className="font-mono text-white text-right">
               {hasData ? `${data.hard.count.toLocaleString()} (${data.hard.percentage}%)` : '— (—%)'}
             </span>
           </div>

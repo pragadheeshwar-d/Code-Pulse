@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Loader2, AlertCircle, CheckCircle, Link2, ExternalLink } from 'lucide-react';
+import { X, Loader2, AlertCircle, CheckCircle, Link2 } from 'lucide-react';
 import { PlatformType } from '../types';
 import { extractUsername, detectPlatformFromUrl, PLATFORM_CONFIGS } from '../utils/platform';
 
@@ -72,12 +72,16 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#101726] border border-[#212f4d] rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[#101726] border-t sm:border border-[#212f4d] rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto touch-scroll safe-bottom">
+        {/* Mobile bottom sheet grab handle */}
+        <div className="w-12 h-1 bg-gray-600/50 rounded-full mx-auto mb-3 sm:hidden" />
+
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-[#64748b] hover:text-white transition-colors"
+          aria-label="Close connect modal"
+          className="absolute top-3 right-3 sm:top-5 sm:right-5 p-2 rounded-lg text-[#64748b] hover:text-white hover:bg-[#162035] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           <X className="w-5 h-5" />
         </button>
@@ -88,7 +92,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
         </p>
 
         {/* Platform Selection */}
-        <div className="grid grid-cols-2 gap-2 mt-5">
+        <div className="grid grid-cols-2 gap-2 mt-4 sm:mt-5">
           {PLATFORM_CONFIGS.map(p => (
             <button
               key={p.id}
@@ -97,7 +101,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
                 setSelectedPlatform(p.id);
                 setError(null);
               }}
-              className={`p-2.5 rounded-lg border text-xs font-medium text-left transition-all ${
+              className={`p-3 rounded-lg border text-xs font-semibold text-left transition-all min-h-[44px] active:scale-[0.98] ${
                 selectedPlatform === p.id
                   ? 'border-blue-500 bg-blue-600/10 text-white shadow-sm'
                   : 'border-[#1e293b] bg-[#141d2f] text-[#8b9cb4] hover:border-[#2a3854] hover:text-white'
@@ -109,7 +113,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-4 sm:mt-5 space-y-4">
           <div>
             <label className="block text-xs font-medium text-[#cbd5e1] mb-1.5">
               {currentConfig.name} Profile Link or Username
@@ -121,7 +125,9 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
                 onChange={handleInputChange}
                 placeholder={currentConfig.placeholder}
                 disabled={loading}
-                className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-sm text-white placeholder-[#475569] focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                autoCapitalize="none"
+                autoCorrect="off"
+                className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-base sm:text-sm text-white placeholder-[#475569] focus:outline-none focus:border-blue-500 transition-colors font-mono min-h-[44px]"
               />
             </div>
 
@@ -158,21 +164,21 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
           )}
 
           {/* Submit Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 text-xs font-medium text-[#8b9cb4] hover:text-white transition-colors"
+              className="px-4 py-2.5 text-xs font-semibold text-[#8b9cb4] hover:text-white transition-colors min-h-[44px] rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !inputValue.trim()}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800/40 disabled:text-[#64748b] text-white transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800/40 disabled:text-[#64748b] text-white transition-all shadow-sm min-h-[44px] active:scale-[0.98]"
             >
-              {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               <span>{loading ? 'Verifying...' : 'Connect & Sync'}</span>
             </button>
           </div>
@@ -181,4 +187,3 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
     </div>
   );
 };
-

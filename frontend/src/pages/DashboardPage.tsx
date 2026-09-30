@@ -83,10 +83,33 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const longestStreak = overview?.longest_streak ?? (anyConnected && longestStreakFromPlatforms > 0 ? longestStreakFromPlatforms : null);
   const totalSubmissions = overview?.total_submissions ?? (anyConnected && totalSubmissionsFromPlatforms > 0 ? totalSubmissionsFromPlatforms : null);
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning 👋';
+    if (hour < 17) return 'Good Afternoon 👋';
+    return 'Good Evening 👋';
+  };
+
   return (
-    <div className="space-y-6">
-      {/* 1. Top Metrics Cards (4 cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* 0. Mobile-first Greeting Banner */}
+      <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">{getGreeting()}</h2>
+          <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">Your verified coding progress overview</p>
+        </div>
+        {effectiveHasData && currentStreak !== null ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 self-start sm:self-auto font-mono text-xs font-semibold">
+            <Flame className="w-4 h-4 text-amber-500 shrink-0" />
+            <span>{currentStreak} Day Streak</span>
+          </div>
+        ) : (
+          <span className="text-xs text-[#64748b]">Real-time telemetry</span>
+        )}
+      </div>
+
+      {/* 1. Top Metrics Cards (2-column on mobile, 1-col on <=350px, 4-col on desktop) */}
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard
           title="Total Problems"
           value={totalProblems}
@@ -110,7 +133,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           iconColor="text-amber-500"
           hasData={effectiveHasData}
           badge={effectiveHasData && longestStreak ? `Max: ${longestStreak}d` : undefined}
-          subtitle={effectiveHasData && longestStreak ? `Max streak: ${longestStreak} days` : 'Verified from connected platforms'}
+          subtitle={effectiveHasData && longestStreak ? `Max streak: ${longestStreak} days` : 'Verified platform data'}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
@@ -125,14 +148,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
       {/* 2. Your Platforms Section */}
       <div>
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-base font-semibold text-white">Your Platforms</h2>
-          <span className="text-xs text-[#64748b]">
-            {anyConnected ? 'Synced accounts' : 'Connect your accounts to start tracking'}
-          </span>
+        <div className="flex flex-col min-[360px]:flex-row min-[360px]:items-center justify-between gap-1 mb-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm sm:text-base font-semibold text-white">Your Platforms</h2>
+            <span className="text-[11px] sm:text-xs text-[#64748b]">
+              {anyConnected ? 'Synced accounts' : 'Connect to track'}
+            </span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {platforms.map(p => (
             <PlatformCard
               key={p.platform}
@@ -145,9 +170,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </div>
 
       {/* 3. Main Dashboard Grid (Left 2 cols, Right 1 col) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left Column (Span 2) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Problems Solved Chart */}
           <ProblemsChart
             data={chartData}
@@ -173,7 +198,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
 
         {/* Right Column (Span 1) */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Goals Widget */}
           <GoalsWidget
             goals={goals}
@@ -202,7 +227,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <div className="mt-1 space-y-1">
               {insights.map((ins, i) => (
                 <p key={i} className="text-xs text-[#94a3b8] flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-blue-400" />
+                  <span className="w-1 h-1 rounded-full bg-blue-400 shrink-0" />
                   <span>{ins}</span>
                 </p>
               ))}

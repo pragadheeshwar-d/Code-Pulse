@@ -117,11 +117,11 @@ describe('Integration Tests: API Endpoints & State Integrity', () => {
     server.close();
   });
 
-  it('requires authentication for dashboard data', async () => {
+  it('requires authentication for protected user endpoints', async () => {
     const server = app.listen(0);
     const port = server.address().port;
 
-    const res = await fetch(`http://localhost:${port}/api/platforms`);
+    const res = await fetch(`http://localhost:${port}/api/auth/me`);
     expect(res.status).toBe(401);
 
     server.close();

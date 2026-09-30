@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, Mail, User, Briefcase, Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Lock, Mail, User, Activity, AlertCircle } from 'lucide-react';
 import { api, setAuthToken } from '../services/api';
 import { UserProfile } from '../types';
 
@@ -60,31 +60,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#0e1626] border border-[#1e293b] rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-left">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[#0e1626] border-t sm:border border-[#1e293b] rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative text-left max-h-[92vh] overflow-y-auto touch-scroll safe-bottom">
+        {/* Mobile bottom sheet grab handle */}
+        <div className="w-12 h-1 bg-gray-600/50 rounded-full mx-auto mb-3 sm:hidden" />
+
         {/* Close Button */}
         {allowClose && (
           <button
             onClick={onClose}
             aria-label="Close authentication dialog"
-            className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a2333] transition"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a2333] transition min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         )}
 
         {/* Brand Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-3">
+        <div className="text-center mb-5 sm:mb-6">
+          <div className="inline-flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-2.5">
             <Activity className="w-6 h-6 animate-pulse" />
           </div>
           <h3 className="text-xl font-bold text-white tracking-tight">
             CODE<span className="text-blue-500">PULSE</span>
           </h3>
-          <p className="text-xs font-medium text-blue-400/90 tracking-widest uppercase mt-0.5">
+          <p className="text-[10px] sm:text-xs font-medium text-blue-400/90 tracking-widest uppercase mt-0.5">
             Track. Solve. Grow.
           </p>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-gray-400 mt-1.5 max-w-xs mx-auto">
             {isRegister
               ? 'Create your personal coding analytics account'
               : 'Sign in to access your coding analytics and synced metrics'}
@@ -92,11 +95,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         </div>
 
         {/* Tab Toggle */}
-        <div className="grid grid-cols-2 p-1 bg-[#141d30] border border-[#1e2a42] rounded-xl mb-5 text-xs font-semibold">
+        <div className="grid grid-cols-2 p-1 bg-[#141d30] border border-[#1e2a42] rounded-xl mb-4 sm:mb-5 text-xs font-semibold">
           <button
             type="button"
             onClick={() => { setIsRegister(false); setError(null); }}
-            className={`py-2 rounded-lg transition ${
+            className={`py-2 rounded-lg transition min-h-[40px] ${
               !isRegister ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -105,7 +108,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <button
             type="button"
             onClick={() => { setIsRegister(true); setError(null); }}
-            className={`py-2 rounded-lg transition ${
+            className={`py-2 rounded-lg transition min-h-[40px] ${
               isRegister ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -121,19 +124,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
         )}
 
-        {/* Form */}
+        {/* Form: Mobile-first 16px font size to prevent iOS zoom */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {isRegister && (
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-1">Full Name</label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Alex Chen"
-                  className="w-full bg-[#141d30] border border-[#1e2a42] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
+                  autoComplete="name"
+                  className="w-full bg-[#141d30] border border-[#1e2a42] rounded-xl pl-9 pr-3 py-2.5 text-base sm:text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition min-h-[44px]"
                   required
                 />
               </div>
@@ -143,13 +147,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <div>
             <label className="block text-xs font-medium text-gray-300 mb-1">Email Address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+              <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full bg-[#141d30] border border-[#1e2a42] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
+                autoComplete="email"
+                inputMode="email"
+                className="w-full bg-[#141d30] border border-[#1e2a42] rounded-xl pl-9 pr-3 py-2.5 text-base sm:text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition min-h-[44px]"
                 required
               />
             </div>
@@ -158,13 +164,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <div>
             <label className="block text-xs font-medium text-gray-300 mb-1">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+              <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[#141d30] border border-[#1e2a42] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+                className="w-full bg-[#141d30] border border-[#1e2a42] rounded-xl pl-9 pr-3 py-2.5 text-base sm:text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition min-h-[44px]"
                 required
               />
             </div>
@@ -173,7 +180,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-500/20 transition flex items-center justify-center gap-2 mt-4"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/20 transition flex items-center justify-center gap-2 mt-4 min-h-[44px] active:scale-[0.98]"
           >
             {loading ? (
               <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

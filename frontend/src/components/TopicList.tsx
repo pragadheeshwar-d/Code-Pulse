@@ -25,11 +25,11 @@ export const TopicList: React.FC<TopicListProps> = ({ topics }) => {
   const hasData = topics.some(t => t.count > 0);
 
   return (
-    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 flex flex-col justify-between">
+    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-blue-400" />
+          <Layers className="w-4 h-4 text-blue-400 shrink-0" />
           <h3 className="font-semibold text-white text-sm">DSA & Topic Coverage</h3>
         </div>
         {hasData && (
@@ -42,8 +42,8 @@ export const TopicList: React.FC<TopicListProps> = ({ topics }) => {
       {/* Topics List */}
       <div className="space-y-3">
         {displayTopics.map((topic, idx) => (
-          <div key={idx} className="flex items-center justify-between gap-3 text-xs">
-            <span className="text-[#8b9cb4] w-32 truncate">{topic.name}</span>
+          <div key={idx} className="flex items-center justify-between gap-2 sm:gap-3 text-xs">
+            <span className="text-[#8b9cb4] w-24 sm:w-32 truncate">{topic.name}</span>
 
             {/* Progress track */}
             <div className="flex-1 h-1.5 bg-[#172238] rounded-full overflow-hidden">
@@ -54,7 +54,7 @@ export const TopicList: React.FC<TopicListProps> = ({ topics }) => {
             </div>
 
             {/* Count & Percentage */}
-            <div className="font-mono text-[#8b9cb4] w-20 text-right shrink-0">
+            <div className="font-mono text-[#8b9cb4] w-14 sm:w-20 text-right shrink-0">
               {hasData ? (
                 <span>
                   <span className="text-white font-medium">{topic.count}</span>

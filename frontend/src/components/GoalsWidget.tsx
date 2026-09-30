@@ -21,11 +21,11 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({
   const displayedGoals = isCompact ? goals.slice(0, 3) : goals;
 
   return (
-    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 flex flex-col justify-between">
+    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Target className="w-4 h-4 text-blue-400" />
+          <Target className="w-4 h-4 text-blue-400 shrink-0" />
           <h3 className="font-semibold text-white text-sm">Goals</h3>
         </div>
 
@@ -33,16 +33,16 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({
           {hasGoals && onViewAllClick && (
             <button
               onClick={onViewAllClick}
-              className="text-xs text-[#8b9cb4] hover:text-white transition-colors"
+              className="text-xs text-[#8b9cb4] hover:text-white transition-colors p-1"
             >
               View all &rarr;
             </button>
           )}
           <button
             onClick={onCreateClick}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors min-h-[36px] active:scale-95"
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Create Goal</span>
           </button>
         </div>
@@ -54,12 +54,12 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({
           {displayedGoals.map(goal => (
             <div
               key={goal.id}
-              className="p-3 bg-[#162035] border border-[#212f4d] rounded-lg space-y-2 hover:border-[#2d3f66] transition-colors"
+              className="p-3.5 bg-[#162035] border border-[#212f4d] rounded-lg space-y-2 hover:border-[#2d3f66] transition-colors"
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="text-xs font-medium text-white line-clamp-1">{goal.title}</span>
+                <span className="text-xs font-semibold text-white line-clamp-1">{goal.title}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+                  className={`text-[10px] px-1.5 py-0.5 rounded font-mono shrink-0 ${
                     goal.status === 'completed'
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                       : goal.status === 'expired'
@@ -75,7 +75,7 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px] text-[#8b9cb4]">
                   <span>
-                    {goal.current || 0} / {goal.target}
+                    <strong className="text-white font-mono">{goal.current || 0}</strong> / {goal.target}
                   </span>
                   <span className="font-mono text-white font-medium">
                     {goal.progress_percentage || 0}%
@@ -86,7 +86,7 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({
                     className={`h-full rounded-full transition-all duration-500 ${
                       goal.status === 'completed' ? 'bg-emerald-500' : 'bg-blue-500'
                     }`}
-                    style={{ width: `${goal.progress_percentage || 0}%` }}
+                    style={{ width: `${Math.min(100, goal.progress_percentage || 0)}%` }}
                   />
                 </div>
               </div>
@@ -100,7 +100,8 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({
                 {onDeleteGoal && (
                   <button
                     onClick={() => onDeleteGoal(goal.id)}
-                    className="hover:text-rose-400 transition-colors"
+                    className="hover:text-rose-400 transition-colors p-1"
+                    aria-label={`Delete ${goal.title}`}
                   >
                     Delete
                   </button>
@@ -110,7 +111,6 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({
           ))}
         </div>
       ) : (
-        /* Clean Empty State matching screenshot */
         <div className="flex flex-col items-center justify-center text-center py-6 px-4 border border-dashed border-[#1d263b] rounded-lg">
           <div className="w-10 h-10 rounded-full bg-[#162035] border border-[#212f4d] flex items-center justify-center mb-3">
             <Target className="w-5 h-5 text-[#64748b]" />
@@ -121,7 +121,7 @@ export const GoalsWidget: React.FC<GoalsWidgetProps> = ({
           </p>
           <button
             onClick={onCreateClick}
-            className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
+            className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors min-h-[44px] flex items-center"
           >
             Create your first coding goal &rarr;
           </button>

@@ -18,12 +18,12 @@ export const PlatformsPage: React.FC<PlatformsPageProps> = ({
   isSyncing
 }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a2333]/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#1a2333]/80">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Connected Platforms</h2>
-          <p className="text-xs text-[#8b9cb4] mt-0.5">
+          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Connected Platforms</h2>
+          <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
             Manage your profiles across LeetCode, Codeforces, CodeChef, and GeeksforGeeks.
           </p>
         </div>
@@ -31,15 +31,15 @@ export const PlatformsPage: React.FC<PlatformsPageProps> = ({
         <button
           onClick={onSyncAll}
           disabled={isSyncing}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-lg text-xs font-semibold transition-all self-start sm:self-auto"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-lg text-xs sm:text-sm font-semibold transition-all self-start sm:self-auto min-h-[44px] active:scale-[0.98]"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
           <span>{isSyncing ? 'Syncing all...' : 'Sync All Platforms'}</span>
         </button>
       </div>
 
       {/* Grid of detailed platform cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
         {platforms.map(p => {
           const stats = p.stats;
           const isConnected = p.connected;
@@ -47,17 +47,17 @@ export const PlatformsPage: React.FC<PlatformsPageProps> = ({
           return (
             <div
               key={p.platform}
-              className="bg-[#101726] border border-[#1d263b] rounded-xl p-6 flex flex-col justify-between hover:border-[#2a3854] transition-all"
+              className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-6 flex flex-col justify-between hover:border-[#2a3854] transition-all"
             >
               <div>
                 {/* Platform Header */}
-                <div className="flex items-start justify-between pb-4 border-b border-[#1c263c]">
+                <div className="flex items-start justify-between pb-3 sm:pb-4 border-b border-[#1c263c]">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-[#162035] border border-[#22314d] flex items-center justify-center font-bold text-white uppercase text-base">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#162035] border border-[#22314d] flex items-center justify-center font-bold text-white uppercase text-sm sm:text-base shrink-0">
                       {p.platform.slice(0, 2)}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white capitalize">{p.platform}</h3>
+                      <h3 className="text-sm sm:text-base font-bold text-white capitalize">{p.platform}</h3>
                       {isConnected && p.username ? (
                         <a
                           href={p.profile_url || '#'}
@@ -75,7 +75,7 @@ export const PlatformsPage: React.FC<PlatformsPageProps> = ({
                   </div>
 
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border shrink-0 ${
                       isConnected
                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         : p.connection_status === 'error'
@@ -88,31 +88,31 @@ export const PlatformsPage: React.FC<PlatformsPageProps> = ({
                         isConnected ? 'bg-emerald-400' : p.connection_status === 'error' ? 'bg-rose-400' : 'bg-gray-500'
                       }`}
                     />
-                    <span>{isConnected ? 'Connected' : p.connection_status === 'error' ? 'Error' : 'Not Connected'}</span>
+                    <span>{isConnected ? 'Connected' : p.connection_status === 'error' ? 'Error' : 'Not Linked'}</span>
                   </span>
                 </div>
 
                 {/* Metrics Breakdown */}
                 {isConnected && stats ? (
-                  <div className="grid grid-cols-3 gap-3 my-5">
-                    <div className="p-3 bg-[#141d2f] border border-[#1e293f] rounded-lg text-center">
-                      <span className="text-[11px] text-[#8b9cb4]">Problems</span>
-                      <p className="text-lg font-bold text-white font-mono mt-0.5">{stats.total_solved}</p>
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 my-4 sm:my-5">
+                    <div className="p-2.5 sm:p-3 bg-[#141d2f] border border-[#1e293f] rounded-lg text-center">
+                      <span className="text-[10px] sm:text-[11px] text-[#8b9cb4]">Problems</span>
+                      <p className="text-base sm:text-lg font-bold text-white font-mono mt-0.5">{stats.total_solved}</p>
                     </div>
-                    <div className="p-3 bg-[#141d2f] border border-[#1e293f] rounded-lg text-center">
-                      <span className="text-[11px] text-[#8b9cb4]">Rating</span>
-                      <p className="text-lg font-bold text-white font-mono mt-0.5">
+                    <div className="p-2.5 sm:p-3 bg-[#141d2f] border border-[#1e293f] rounded-lg text-center">
+                      <span className="text-[10px] sm:text-[11px] text-[#8b9cb4]">Rating</span>
+                      <p className="text-base sm:text-lg font-bold text-white font-mono mt-0.5">
                         {stats.rating !== null ? stats.rating : '—'}
                       </p>
                     </div>
-                    <div className="p-3 bg-[#141d2f] border border-[#1e293f] rounded-lg text-center">
-                      <span className="text-[11px] text-[#8b9cb4]">Streak</span>
-                      <p className="text-lg font-bold text-white font-mono mt-0.5">{stats.current_streak}d</p>
-                      <span className="text-[10px] text-amber-400 font-mono block">Max: {stats.longest_streak ?? stats.current_streak}d</span>
+                    <div className="p-2.5 sm:p-3 bg-[#141d2f] border border-[#1e293f] rounded-lg text-center">
+                      <span className="text-[10px] sm:text-[11px] text-[#8b9cb4]">Streak</span>
+                      <p className="text-base sm:text-lg font-bold text-white font-mono mt-0.5">{stats.current_streak}d</p>
+                      <span className="text-[9px] sm:text-[10px] text-amber-400 font-mono block">Max: {stats.longest_streak ?? stats.current_streak}d</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="my-6 p-4 rounded-lg bg-[#141d2f] border border-dashed border-[#1e293f] text-center">
+                  <div className="my-5 p-4 rounded-lg bg-[#141d2f] border border-dashed border-[#1e293f] text-center">
                     <p className="text-xs text-[#8b9cb4]">
                       No account connected. Connect with your username to import statistics.
                     </p>
@@ -126,21 +126,21 @@ export const PlatformsPage: React.FC<PlatformsPageProps> = ({
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Actions: Touch friendly 44px min-h */}
               <div className="pt-3 border-t border-[#1a2333]/80 flex gap-2">
                 {isConnected ? (
                   <button
                     onClick={() => onManage(p.platform)}
-                    className="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-[#162035] hover:bg-[#1f2d48] text-white border border-[#22314d] transition-colors"
+                    className="w-full py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#162035] hover:bg-[#1f2d48] text-white border border-[#22314d] transition-colors min-h-[44px] flex items-center justify-center active:scale-[0.98]"
                   >
                     Manage &amp; Sync &rarr;
                   </button>
                 ) : (
                   <button
                     onClick={() => onConnect(p.platform)}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors min-h-[44px] active:scale-[0.98]"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                     <span>Connect Account</span>
                   </button>
                 )}

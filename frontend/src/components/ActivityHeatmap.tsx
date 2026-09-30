@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { HeatmapDay } from '../types';
 
@@ -13,6 +13,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   selectedPlatform,
   onSelectPlatform
 }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const platforms = [
     { id: 'all', label: 'All' },
     { id: 'leetcode', label: 'LeetCode' },
@@ -20,6 +22,13 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     { id: 'geeksforgeeks', label: 'GFG' },
     { id: 'codeforces', label: 'Codeforces' }
   ];
+
+  // Auto-scroll to end (current date) on initial render for mobile
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [activityData]);
 
   // Build 52 weeks calendar grid (aligned Monday to Sunday, ending current week)
   const { weeks, monthLabels } = useMemo(() => {
@@ -96,21 +105,21 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   };
 
   return (
-    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 flex flex-col justify-between">
+    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-blue-400" />
+          <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
           <h3 className="font-semibold text-white text-sm">Coding Activity</h3>
         </div>
 
         {/* Platform Tabs */}
-        <div className="flex items-center gap-1 bg-[#162035] p-1 rounded-lg border border-[#22314d] self-start sm:self-auto overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1 bg-[#162035] p-1 rounded-lg border border-[#22314d] self-start sm:self-auto overflow-x-auto no-scrollbar touch-scroll max-w-full">
           {platforms.map(p => (
             <button
               key={p.id}
               onClick={() => onSelectPlatform(p.id)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap ${
+              className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap min-h-[32px] active:scale-95 ${
                 selectedPlatform === p.id
                   ? 'bg-blue-600 text-white font-semibold shadow-sm'
                   : 'text-[#8b9cb4] hover:text-white hover:bg-[#1f2d48]'
@@ -122,8 +131,11 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
         </div>
       </div>
 
-      {/* Grid Container */}
-      <div className="overflow-x-auto pb-2">
+      {/* Grid Container with touch momentum scroll */}
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto pb-2 touch-scroll scroll-smooth"
+      >
         <div className="min-w-[760px]">
           {/* Month Labels Positioned Accurately Above Columns */}
           <div className="relative h-4 mb-1.5 ml-8 text-[10px] text-[#64748b]">
@@ -195,16 +207,19 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       </div>
 
       {/* Heatmap Legend */}
-      <div className="flex items-center justify-end gap-2 text-xs text-[#64748b] mt-3 pt-3 border-t border-[#1a2333]/80">
-        <span>Less activity</span>
-        <div className="flex gap-1 items-center">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-[#141d2f] border border-[#1d2942]" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-900/90 border border-blue-700/60" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-700 border border-blue-500" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-500 border border-blue-400" />
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-400 border border-blue-300" />
+      <div className="flex flex-col 2xs:flex-row items-start 2xs:items-center justify-between gap-2 text-xs text-[#64748b] mt-3 pt-3 border-t border-[#1a2333]/80">
+        <span className="text-[11px] text-[#64748b] sm:hidden">← Swipe to see full history</span>
+        <div className="flex items-center gap-2 self-end 2xs:self-auto ml-auto">
+          <span className="text-[11px]">Less</span>
+          <div className="flex gap-1 items-center">
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-[#141d2f] border border-[#1d2942]" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-900/90 border border-blue-700/60" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-700 border border-blue-500" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-500 border border-blue-400" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-400 border border-blue-300" />
+          </div>
+          <span className="text-[11px]">More</span>
         </div>
-        <span>More activity</span>
       </div>
     </div>
   );

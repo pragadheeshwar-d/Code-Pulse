@@ -42,35 +42,36 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
     }
   };
 
-  const latestCumulative = hasData ? data[data.length - 1]?.cumulative : 0;
   const periodTotalSolved = hasData ? data.reduce((acc, cur) => acc + (cur.daily || 0), 0) : 0;
 
   return (
-    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 flex flex-col justify-between">
+    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
       {/* Chart Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-blue-400" />
-            <h3 className="font-semibold text-white text-sm">Problems Solved Trajectory</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-blue-400 shrink-0" />
+              <h3 className="font-semibold text-white text-sm">Problems Solved Trajectory</h3>
+            </div>
             {hasData && (
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
                 +{periodTotalSolved} in this period
               </span>
             )}
           </div>
-          <p className="text-[11px] text-[#64748b] mt-0.5">
+          <p className="text-[11px] sm:text-xs text-[#64748b] mt-0.5">
             Continuous progression across all verified platforms
           </p>
         </div>
 
-        {/* Period Filter Buttons */}
-        <div className="flex items-center gap-1 bg-[#162035] p-1 rounded-lg border border-[#22314d] self-start sm:self-auto">
+        {/* Period Filter Buttons - Horizontally scrollable without breaking on small viewports */}
+        <div className="flex items-center gap-1 bg-[#162035] p-1 rounded-lg border border-[#22314d] self-start sm:self-auto overflow-x-auto no-scrollbar touch-scroll max-w-full">
           {periods.map(p => (
             <button
               key={p}
               onClick={() => onPeriodChange(p.toLowerCase())}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors shrink-0 min-h-[32px] active:scale-95 ${
                 period.toUpperCase() === p
                   ? 'bg-blue-600 text-white font-semibold shadow-sm'
                   : 'text-[#8b9cb4] hover:text-white hover:bg-[#1f2d48]'
@@ -83,10 +84,10 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
       </div>
 
       {/* Chart Canvas or Empty State */}
-      <div className="h-64 w-full relative flex items-center justify-center">
+      <div className="h-56 sm:h-64 lg:h-72 w-full relative flex items-center justify-center">
         {hasData ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 5, left: -22, bottom: 0 }}>
               <defs>
                 <linearGradient id="problemsGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4} />
@@ -97,15 +98,15 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
               <XAxis
                 dataKey="date"
                 stroke="#64748b"
-                tick={{ fill: '#64748b', fontSize: 11 }}
+                tick={{ fill: '#64748b', fontSize: 10 }}
                 tickFormatter={formatDateTick}
-                minTickGap={28}
+                minTickGap={36}
                 tickLine={false}
                 axisLine={{ stroke: '#1b253b' }}
               />
               <YAxis
                 stroke="#64748b"
-                tick={{ fill: '#64748b', fontSize: 11 }}
+                tick={{ fill: '#64748b', fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
                 domain={['auto', 'auto']}
@@ -116,13 +117,13 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
                     const point = payload[0].payload as ChartPoint;
                     const dateFormatted = formatDateTick(point.date);
                     return (
-                      <div className="bg-[#0d131f] border border-[#24324f] rounded-lg p-2.5 shadow-xl text-xs space-y-1">
+                      <div className="bg-[#0d131f] border border-[#24324f] rounded-lg p-2.5 shadow-xl text-xs space-y-1 max-w-[240px]">
                         <div className="font-semibold text-white">{dateFormatted} ({point.date})</div>
-                        <div className="flex items-center justify-between gap-4 text-[#94a3b8]">
+                        <div className="flex items-center justify-between gap-3 text-[#94a3b8]">
                           <span>Daily Activity:</span>
                           <span className="font-mono text-emerald-400 font-medium">+{point.daily} solved</span>
                         </div>
-                        <div className="flex items-center justify-between gap-4 text-[#94a3b8]">
+                        <div className="flex items-center justify-between gap-3 text-[#94a3b8]">
                           <span>Cumulative Total:</span>
                           <span className="font-mono text-blue-400 font-bold">{point.cumulative} total</span>
                         </div>
@@ -157,7 +158,7 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
             {onConnectClick && (
               <button
                 onClick={onConnectClick}
-                className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors min-h-[44px] flex items-center"
               >
                 Connect account &rarr;
               </button>

@@ -5,6 +5,7 @@ import { ConnectModal } from './components/ConnectModal';
 import { CreateGoalModal } from './components/CreateGoalModal';
 import { PlatformDetailModal } from './components/PlatformDetailModal';
 import { AuthModal } from './components/AuthModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 // Pages
 import { DashboardPage } from './pages/DashboardPage';
@@ -15,6 +16,7 @@ import { GoalsPage } from './pages/GoalsPage';
 import { ContestsPage } from './pages/ContestsPage';
 import { ActivityPage } from './pages/ActivityPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { GitHubPage } from './pages/GitHubPage';
 
 // API & Types
 import { api, getAuthToken, removeAuthToken } from './services/api';
@@ -70,6 +72,7 @@ export const App: React.FC = () => {
   const [isPlatformDetailModalOpen, setIsPlatformDetailModalOpen] = useState(false);
   const [selectedDetailPlatform, setSelectedDetailPlatform] = useState<PlatformCardData | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await api.logout();
@@ -294,28 +297,38 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#090d16] text-[#e2e8f0]">
-      {/* Left Sidebar */}
+    <div className="flex min-h-screen bg-[#090d16] text-[#e2e8f0] overflow-x-hidden">
+      {/* Sidebar: Desktop persistent + Mobile slide-over drawer */}
       <Sidebar
         currentTab={currentTab}
-        onTabChange={setCurrentTab}
+        onTabChange={(tab) => {
+          setCurrentTab(tab);
+          setIsMobileMenuOpen(false);
+        }}
         user={user}
         lastSyncedText={getLastSyncedText()}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {/* Top Header */}
-          <Header
-            user={user}
-            lastSyncedText={getLastSyncedText()}
-            isSyncing={isSyncing}
-            onSync={handleSyncAll}
-          />
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        {/* Top Header: Sticky compact on mobile, expanded on desktop */}
+        <Header
+          user={user}
+          lastSyncedText={getLastSyncedText()}
+          isSyncing={isSyncing}
+          onSync={handleSyncAll}
+          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          onOpenProfile={() => {
+            setCurrentTab('settings');
+            setIsMobileMenuOpen(false);
+          }}
+        />
 
+        <main className="flex-1 p-3 xs:p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">
           {/* Page Routing */}
           {currentTab === 'dashboard' && (
             <DashboardPage
@@ -396,6 +409,10 @@ export const App: React.FC = () => {
             />
           )}
 
+          {currentTab === 'github' && (
+            <GitHubPage user={user} />
+          )}
+
           {currentTab === 'settings' && (
             <SettingsPage
               user={user}
@@ -409,6 +426,16 @@ export const App: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (< lg) */}
+      <MobileBottomNav
+        currentTab={currentTab}
+        onTabChange={(tab) => {
+          setCurrentTab(tab);
+          setIsMobileMenuOpen(false);
+        }}
+        onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+      />
 
       {/* Interactive Modals */}
       <ConnectModal

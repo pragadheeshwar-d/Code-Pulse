@@ -61,29 +61,30 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="pb-4 border-b border-[#1a2333]/80">
-        <h2 className="text-xl font-bold text-white tracking-tight">Settings & Preferences</h2>
-        <p className="text-xs text-[#8b9cb4] mt-0.5">
+        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Settings & Preferences</h2>
+        <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
           Configure profile details, automated synchronization intervals, and data preferences.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left Form: Profile & Sync settings */}
-        <div className="lg:col-span-2 space-y-6">
-          <form onSubmit={handleSave} className="bg-[#101726] border border-[#1d263b] rounded-xl p-6 space-y-5">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+          <form onSubmit={handleSave} className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-6 space-y-4 sm:space-y-5">
             <h3 className="font-semibold text-white text-sm">Personal Profile</h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-xs font-medium text-[#cbd5e1] mb-1.5">Display Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#141d2f] border border-[#22314e] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                  autoComplete="name"
+                  className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-base sm:text-xs text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
                 />
               </div>
 
@@ -93,7 +94,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#141d2f] border border-[#22314e] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                  autoComplete="email"
+                  inputMode="email"
+                  className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-base sm:text-xs text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
                 />
               </div>
             </div>
@@ -107,7 +110,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <select
                 value={autoSync}
                 onChange={e => setAutoSync(e.target.value as any)}
-                className="w-full sm:w-64 px-3 py-2 bg-[#141d2f] border border-[#22314e] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                className="w-full sm:w-64 px-3 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
               >
                 <option value="6h">Every 6 Hours</option>
                 <option value="12h">Every 12 Hours (Default)</option>
@@ -127,20 +130,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-sm"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-sm min-h-[44px] active:scale-[0.98]"
               >
-                <Save className="w-3.5 h-3.5" />
+                <Save className="w-4 h-4" />
                 <span>{saving ? 'Saving...' : 'Save Settings'}</span>
               </button>
             </div>
           </form>
 
           {/* Connected Platform Accounts */}
-          <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-6">
+          <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-6">
             <h3 className="font-semibold text-white text-sm mb-4">Platform Accounts</h3>
             <div className="divide-y divide-[#172238]">
               {platforms.map(p => (
-                <div key={p.platform} className="py-3 flex items-center justify-between text-xs">
+                <div key={p.platform} className="py-3 flex flex-col min-[360px]:flex-row min-[360px]:items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2.5">
                     <span className="font-semibold text-white capitalize">{p.platform}</span>
                     {p.connected ? (
@@ -150,13 +153,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 self-end min-[360px]:self-auto">
                     {p.connected && p.profile_url && (
                       <a
                         href={p.profile_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors p-1 min-h-[36px]"
                         title="View public profile"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -166,14 +169,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     {p.connected ? (
                       <button
                         onClick={() => onDisconnectPlatform(p.platform)}
-                        className="text-xs text-rose-400 hover:text-rose-300 transition-colors"
+                        className="text-xs text-rose-400 hover:text-rose-300 transition-colors px-2 py-1.5 rounded hover:bg-rose-500/10 min-h-[36px] flex items-center"
                       >
                         Disconnect
                       </button>
                     ) : onConnectPlatform ? (
                       <button
                         onClick={() => onConnectPlatform(p.platform)}
-                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors px-2 py-1.5 rounded hover:bg-blue-500/10 min-h-[36px] flex items-center"
                       >
                         Connect
                       </button>
@@ -186,18 +189,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Right Column: Sync Logs */}
-        <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-6">
+        <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-4 h-4 text-blue-400" />
+            <Clock className="w-4 h-4 text-blue-400 shrink-0" />
             <h3 className="font-semibold text-white text-sm">Recent Sync Logs</h3>
           </div>
 
           {syncLogs.length > 0 ? (
-            <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1 touch-scroll">
               {syncLogs.slice(0, 15).map(log => (
                 <div
                   key={log.id}
-                  className="p-2.5 bg-[#141d2f] border border-[#1e2a42] rounded-lg text-xs space-y-1"
+                  className="p-3 bg-[#141d2f] border border-[#1e2a42] rounded-lg text-xs space-y-1"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-white capitalize">{log.platform}</span>

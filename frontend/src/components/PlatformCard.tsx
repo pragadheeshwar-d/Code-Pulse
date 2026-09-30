@@ -41,6 +41,7 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
       case 'geeksforgeeks':
         return {
           name: 'GeeksforGeeks',
+          shortName: 'GFG',
           iconText: 'GFG',
           borderColor: 'border-emerald-600/20 hover:border-emerald-600/40',
           accentColor: 'text-[#10b981]',
@@ -52,6 +53,7 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
       case 'codeforces':
         return {
           name: 'Codeforces',
+          shortName: 'Codeforces',
           iconText: 'CF',
           borderColor: 'border-blue-600/20 hover:border-blue-600/40',
           accentColor: 'text-[#3b82f6]',
@@ -80,23 +82,26 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
   };
 
   return (
-    <div className={`bg-[#101726] border ${config.borderColor} rounded-xl p-5 flex flex-col justify-between transition-all group relative overflow-hidden`}>
+    <div className={`bg-[#101726] border ${config.borderColor} rounded-xl p-3 sm:p-5 flex flex-col justify-between transition-all group relative overflow-hidden active:scale-[0.99]`}>
       {/* Top Header */}
       <div>
-        <div className="flex items-center justify-between pb-3 border-b border-[#1c263c]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#162035] border border-[#212f4d] flex items-center justify-center">
+        <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-[#1c263c]">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#162035] border border-[#212f4d] flex items-center justify-center shrink-0">
               {config.iconSvg}
             </div>
-            <div>
-              <h3 className="font-semibold text-white text-sm tracking-tight">{config.name}</h3>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-white text-xs sm:text-sm tracking-tight truncate">
+                <span className="min-[480px]:hidden">{config.shortName || config.name}</span>
+                <span className="hidden min-[480px]:inline">{config.name}</span>
+              </h3>
               {isConnected && data.username && (
-                <span className="text-xs text-[#8b9cb4] font-mono">@{data.username}</span>
+                <span className="text-[11px] text-[#8b9cb4] font-mono truncate block">@{data.username}</span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0" title={isConnected ? 'Connected' : data.connection_status === 'error' ? 'Error' : 'Not linked'}>
             <span
               className={`w-1.5 h-1.5 rounded-full ${
                 isConnected
@@ -106,16 +111,16 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
                   : 'bg-[#64748b]'
               }`}
             />
-            <span className="text-xs text-[#8b9cb4]">
-              {isConnected ? 'Connected' : data.connection_status === 'error' ? 'Sync Error' : 'Not connected'}
+            <span className="text-[11px] text-[#8b9cb4] hidden min-[440px]:inline">
+              {isConnected ? 'Connected' : data.connection_status === 'error' ? 'Error' : 'Not linked'}
             </span>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="py-4 space-y-2.5 text-xs">
+        <div className="py-3.5 space-y-2 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[#8b9cb4]">Problems solved</span>
+            <span className="text-[#8b9cb4]">Solved</span>
             <span className="font-mono font-medium text-white">
               {isConnected && data.stats ? data.stats.total_solved : '—'}
             </span>
@@ -151,19 +156,19 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Action Button: Touch-friendly min 44px */}
       <div className="pt-2">
         {isConnected ? (
           <button
             onClick={() => onManage(data.platform)}
-            className="w-full py-2 px-3 rounded-lg text-xs font-medium bg-[#172238] hover:bg-[#1f2d4a] text-[#cbd5e1] hover:text-white border border-[#22314e] transition-colors"
+            className="w-full py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#172238] hover:bg-[#1f2d4a] text-[#cbd5e1] hover:text-white border border-[#22314e] transition-colors min-h-[44px] flex items-center justify-center active:scale-[0.98]"
           >
             Manage account &rarr;
           </button>
         ) : (
           <button
             onClick={() => onConnect(data.platform)}
-            className="w-full py-2 px-3 rounded-lg text-xs font-medium bg-[#162035] hover:bg-blue-600/20 text-[#8b9cb4] hover:text-blue-400 border border-[#22314e] hover:border-blue-500/30 transition-colors"
+            className="w-full py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#162035] hover:bg-blue-600/20 text-[#8b9cb4] hover:text-blue-400 border border-[#22314e] hover:border-blue-500/30 transition-colors min-h-[44px] flex items-center justify-center active:scale-[0.98]"
           >
             Connect account &rarr;
           </button>
