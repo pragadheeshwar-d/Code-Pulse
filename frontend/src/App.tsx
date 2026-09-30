@@ -299,7 +299,7 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-[#090d16] text-[#e2e8f0]">
       {/* Responsive layout: Single-column flex on mobile, 2-column CSS Grid on desktop (>= lg) */}
-      <div className="min-h-screen min-h-[100dvh] flex flex-col lg:grid lg:grid-cols-[274px_minmax(0,1fr)]">
+      <div className="min-h-screen min-h-[100dvh] flex flex-col lg:grid lg:grid-cols-[224px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
         {/* Sidebar: Desktop persistent (Column 1) + Mobile drawer */}
         <Sidebar
           currentTab={currentTab}
@@ -331,8 +331,8 @@ export const App: React.FC = () => {
             variant="mobile"
           />
 
-          <main className="flex-1 min-w-0 w-full px-3 xs:px-4 sm:px-6 lg:px-8 pt-3 xs:pt-4 sm:pt-6 lg:pt-8 content-bottom-safe">
-          {/* Top Header: Expanded on desktop (>= lg) */}
+          <main className="flex-1 min-w-0 w-full px-3 xs:px-4 sm:px-6 lg:px-5 xl:px-8 pt-3 xs:pt-4 sm:pt-6 lg:pt-8 content-bottom-safe">
+          {/* Dashboard Page Header */}
           <Header
             user={user}
             lastSyncedText={getLastSyncedText()}

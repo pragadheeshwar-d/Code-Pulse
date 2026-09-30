@@ -93,23 +93,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   return (
     <div className="space-y-6">
       {/* 0. Greeting Banner */}
-      <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-5 flex flex-col min-[420px]:flex-row min-[420px]:items-center justify-between gap-3">
+      <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
           <h2 className="text-xl font-bold text-white tracking-tight">{getGreeting()}</h2>
           <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">Your verified coding progress overview</p>
         </div>
-        {effectiveHasData && currentStreak !== null ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 self-start min-[420px]:self-auto font-mono text-xs font-semibold shrink-0 whitespace-nowrap">
+        {currentStreak !== null && currentStreak !== undefined ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 self-start sm:self-auto font-mono text-xs font-semibold shrink-0 whitespace-nowrap">
             <Flame className="w-4 h-4 text-amber-500 shrink-0" />
             <span>{currentStreak} Day Streak</span>
           </div>
         ) : (
-          <span className="text-xs text-[#64748b] shrink-0 whitespace-nowrap">Real-time telemetry</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#141d2f] border border-[#212f4d] text-[#64748b] self-start sm:self-auto text-xs font-medium shrink-0 whitespace-nowrap">
+            <span>Real-time telemetry</span>
+          </div>
         )}
       </div>
 
       {/* 1. Top Metrics Cards (4-col on desktop, 2-col on tablet, 1-col on mobile) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 xl:gap-4">
         <MetricCard
           title="Total Problems"
           value={totalProblems}
@@ -148,7 +150,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
       {/* 2. Your Platforms Section */}
       <div>
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-semibold text-white tracking-tight">Your Platforms</h2>
             <span className="text-xs text-[#64748b]">
@@ -158,7 +160,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
 
         {/* 4 Platform Cards (4-col on desktop, 2-col on tablet, 1-col on mobile) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 xl:gap-4">
           {platforms.map(p => (
             <PlatformCard
               key={p.platform}

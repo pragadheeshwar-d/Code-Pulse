@@ -212,7 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* 1. Desktop Persistent Sidebar */}
-      <aside className="hidden lg:flex w-[274px] min-w-[274px] bg-[#0d131f] border-r border-[#1a2333] flex-col justify-between shrink-0 h-screen sticky top-0 select-none">
+      <aside className="hidden lg:flex w-[224px] min-w-[224px] xl:w-[260px] xl:min-w-[260px] bg-[#0d131f] border-r border-[#1a2333] flex-col justify-between shrink-0 h-screen sticky top-0 select-none">
         {renderContent(false)}
       </aside>
 

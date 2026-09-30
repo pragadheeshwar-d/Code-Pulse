@@ -71,47 +71,49 @@ export const Header: React.FC<HeaderProps> = ({
         </header>
       )}
 
-      {/* 2. Desktop Header (>= lg) */}
+      {/* 2. Dashboard Page Header */}
       {variant !== 'mobile' && (
-        <div className="hidden lg:flex items-center justify-between gap-4 pb-6 border-b border-[#1a2333]/60 mb-6 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-[#1a2333]/60 mb-6 w-full">
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-white tracking-tight">Coding Progress</h1>
-            <p className="text-sm text-[#8b9cb4] mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Coding Progress</h1>
+            <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
               Track your coding journey across every platform.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 sm:gap-4 shrink-0">
             {/* Last synced status */}
             <div className="flex items-center gap-2 text-xs text-[#8b9cb4] whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse shrink-0" />
               <span>Last synced: <span className="text-[#cbd5e1] font-mono">{lastSyncedText}</span></span>
             </div>
 
-            {/* Sync Now Button */}
-            <button
-              onClick={onSync}
-              disabled={isSyncing}
-              aria-label="Sync all platform data"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm min-h-[40px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16] ${
-                isSyncing
-                  ? 'bg-blue-600/70 text-blue-100 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-500 text-white active:scale-95'
-              }`}
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Sync Now Button */}
+              <button
+                onClick={onSync}
+                disabled={isSyncing}
+                aria-label="Sync all platform data"
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all shadow-sm min-h-[38px] sm:min-h-[40px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16] ${
+                  isSyncing
+                    ? 'bg-blue-600/70 text-blue-100 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white active:scale-95'
+                }`}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+              </button>
 
-            {/* User Avatar */}
-            <button
-              onClick={onOpenProfile}
-              title="Profile & Settings"
-              aria-label="Profile & Settings"
-              className="w-9 h-9 rounded-full bg-[#1e293b] text-white border border-[#334155] flex items-center justify-center font-semibold text-sm shadow-sm hover:border-blue-400 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16]"
-            >
-              {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
-            </button>
+              {/* User Avatar (shown on desktop where mobile top bar is hidden) */}
+              <button
+                onClick={onOpenProfile}
+                title="Profile & Settings"
+                aria-label="Profile & Settings"
+                className="hidden lg:flex w-9 h-9 rounded-full bg-[#1e293b] text-white border border-[#334155] items-center justify-center font-semibold text-sm shadow-sm hover:border-blue-400 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16]"
+              >
+                {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
+              </button>
+            </div>
           </div>
         </div>
       )}
