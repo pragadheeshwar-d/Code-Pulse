@@ -297,7 +297,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#090d16] text-[#e2e8f0] overflow-x-hidden">
+    <div className="flex min-h-screen min-h-[100dvh] bg-[#090d16] text-[#e2e8f0]">
       {/* Sidebar: Desktop persistent + Mobile slide-over drawer */}
       <Sidebar
         currentTab={currentTab}
@@ -314,8 +314,8 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* Top Header: Sticky compact on mobile, expanded on desktop */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Header: Sticky compact on mobile (< lg) */}
         <Header
           user={user}
           lastSyncedText={getLastSyncedText()}
@@ -326,9 +326,22 @@ export const App: React.FC = () => {
             setCurrentTab('settings');
             setIsMobileMenuOpen(false);
           }}
+          variant="mobile"
         />
 
-        <main className="flex-1 p-3 xs:p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 px-3 xs:px-4 sm:px-6 lg:px-8 pt-3 xs:pt-4 sm:pt-6 lg:pt-8 content-bottom-safe max-w-7xl w-full mx-auto">
+          {/* Top Header: Expanded on desktop (>= lg) */}
+          <Header
+            user={user}
+            lastSyncedText={getLastSyncedText()}
+            isSyncing={isSyncing}
+            onSync={handleSyncAll}
+            onOpenProfile={() => {
+              setCurrentTab('settings');
+            }}
+            variant="desktop"
+          />
+
           {/* Page Routing */}
           {currentTab === 'dashboard' && (
             <DashboardPage
