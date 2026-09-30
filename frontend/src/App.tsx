@@ -297,39 +297,41 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen min-h-[100dvh] bg-[#090d16] text-[#e2e8f0]">
-      {/* Sidebar: Desktop persistent + Mobile slide-over drawer */}
-      <Sidebar
-        currentTab={currentTab}
-        onTabChange={(tab) => {
-          setCurrentTab(tab);
-          setIsMobileMenuOpen(false);
-        }}
-        user={user}
-        lastSyncedText={getLastSyncedText()}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
-        onLogout={handleLogout}
-        isMobileOpen={isMobileMenuOpen}
-        onCloseMobile={() => setIsMobileMenuOpen(false)}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header: Sticky compact on mobile (< lg) */}
-        <Header
-          user={user}
-          lastSyncedText={getLastSyncedText()}
-          isSyncing={isSyncing}
-          onSync={handleSyncAll}
-          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          onOpenProfile={() => {
-            setCurrentTab('settings');
+    <div className="min-h-screen min-h-[100dvh] bg-[#090d16] text-[#e2e8f0]">
+      {/* Responsive layout: Single-column flex on mobile, 2-column CSS Grid on desktop (>= lg) */}
+      <div className="min-h-screen min-h-[100dvh] flex flex-col lg:grid lg:grid-cols-[274px_minmax(0,1fr)]">
+        {/* Sidebar: Desktop persistent (Column 1) + Mobile drawer */}
+        <Sidebar
+          currentTab={currentTab}
+          onTabChange={(tab) => {
+            setCurrentTab(tab);
             setIsMobileMenuOpen(false);
           }}
-          variant="mobile"
+          user={user}
+          lastSyncedText={getLastSyncedText()}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onLogout={handleLogout}
+          isMobileOpen={isMobileMenuOpen}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
         />
 
-        <main className="flex-1 px-3 xs:px-4 sm:px-6 lg:px-8 pt-3 xs:pt-4 sm:pt-6 lg:pt-8 content-bottom-safe max-w-7xl w-full mx-auto">
+        {/* Main Content Column (Column 2: min-width: 0; width: auto) */}
+        <div className="min-w-0 w-auto flex flex-col flex-1">
+          {/* Top Header: Sticky compact on mobile (< lg) */}
+          <Header
+            user={user}
+            lastSyncedText={getLastSyncedText()}
+            isSyncing={isSyncing}
+            onSync={handleSyncAll}
+            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+            onOpenProfile={() => {
+              setCurrentTab('settings');
+              setIsMobileMenuOpen(false);
+            }}
+            variant="mobile"
+          />
+
+          <main className="flex-1 min-w-0 w-full px-3 xs:px-4 sm:px-6 lg:px-8 pt-3 xs:pt-4 sm:pt-6 lg:pt-8 content-bottom-safe">
           {/* Top Header: Expanded on desktop (>= lg) */}
           <Header
             user={user}
@@ -439,6 +441,7 @@ export const App: React.FC = () => {
           )}
         </main>
       </div>
+    </div>
 
       {/* Mobile Bottom Navigation Bar (< lg) */}
       <MobileBottomNav

@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={onCloseMobile}
               aria-label="Close navigation drawer"
-              className="p-2 -mr-1 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a2333] transition min-w-[44px] min-h-[44px] flex items-center justify-center"
+              className="p-2 -mr-1 rounded-lg text-gray-400 hover:text-white hover:bg-[#1a2333] transition min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <X className="w-5 h-5" />
             </button>
@@ -133,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] text-left active:scale-[0.99] ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] text-left active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   isActive
                     ? 'bg-[#182338] text-white shadow-sm font-semibold'
                     : 'text-[#8b9cb4] hover:text-white hover:bg-[#131b2c]'
@@ -177,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               title="Sign Out"
               aria-label="Sign Out"
-              className="p-2 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-[#1a2438] transition min-w-[36px] min-h-[36px] flex items-center justify-center"
+              className="p-2 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-[#1a2438] transition min-w-[36px] min-h-[36px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -188,7 +188,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 if (onCloseMobile) onCloseMobile();
               }}
               title="Sign In"
-              className="px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-medium transition flex items-center gap-1 min-h-[36px]"
+              aria-label="Sign In"
+              className="px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-medium transition flex items-center gap-1 min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Login</span>
@@ -211,7 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* 1. Desktop Persistent Sidebar */}
-      <aside className="hidden lg:flex w-64 bg-[#0d131f] border-r border-[#1a2333] flex-col justify-between shrink-0 h-screen sticky top-0 select-none">
+      <aside className="hidden lg:flex w-[274px] min-w-[274px] bg-[#0d131f] border-r border-[#1a2333] flex-col justify-between shrink-0 h-screen sticky top-0 select-none">
         {renderContent(false)}
       </aside>
 

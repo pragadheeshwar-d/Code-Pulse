@@ -33,7 +33,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`flex flex-col items-center justify-center gap-1 min-h-[48px] py-1 transition-all rounded-lg relative ${
+              className={`flex flex-col items-center justify-center gap-1 min-h-[48px] py-1 transition-all rounded-lg relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 isActive ? 'text-blue-400 font-semibold' : 'text-[#8b9cb4] hover:text-white'
               }`}
             >
@@ -50,7 +50,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <button
           onClick={onOpenMobileMenu}
           aria-label="Open full navigation drawer"
-          className="flex flex-col items-center justify-center gap-1 min-h-[48px] py-1 text-[#8b9cb4] hover:text-white transition-all rounded-lg active:scale-95"
+          className="flex flex-col items-center justify-center gap-1 min-h-[48px] py-1 text-[#8b9cb4] hover:text-white transition-all rounded-lg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           <Menu className="w-5 h-5 text-[#64748b]" />
           <span className="text-[10px] tracking-tight">Menu</span>

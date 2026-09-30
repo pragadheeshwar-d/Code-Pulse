@@ -82,36 +82,47 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
   };
 
   return (
-    <div className={`bg-[#101726] border ${config.borderColor} rounded-xl p-3 sm:p-5 flex flex-col justify-between transition-all group relative overflow-hidden active:scale-[0.99]`}>
+    <div className={`bg-[#101726] border ${config.borderColor} rounded-xl p-4 sm:p-5 flex flex-col justify-between transition-all group relative overflow-hidden active:scale-[0.99] h-full`}>
       {/* Top Header */}
       <div>
-        <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-[#1c263c]">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#162035] border border-[#212f4d] flex items-center justify-center shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b border-[#1c263c] min-h-[52px]">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#162035] border border-[#212f4d] flex items-center justify-center shrink-0">
               {config.iconSvg}
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-white text-xs sm:text-sm tracking-tight truncate">
-                <span className="min-[480px]:hidden">{config.shortName || config.name}</span>
-                <span className="hidden min-[480px]:inline">{config.name}</span>
+              <h3 className="font-semibold text-white text-sm tracking-tight truncate">
+                {config.name}
               </h3>
-              {isConnected && data.username && (
-                <span className="text-[11px] text-[#8b9cb4] font-mono truncate block">@{data.username}</span>
-              )}
+              <span className="text-[11px] font-mono truncate block h-4 leading-4 text-[#8b9cb4]">
+                {isConnected && data.username ? `@${data.username}` : ''}
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0" title={isConnected ? 'Connected' : data.connection_status === 'error' ? 'Error' : 'Not linked'}>
+          <div
+            className="flex items-center gap-1.5 shrink-0"
+            role="status"
+            aria-label={`Status: ${isConnected ? 'Connected' : data.connection_status === 'error' ? 'Connection Error' : 'Not linked'}`}
+          >
             <span
-              className={`w-1.5 h-1.5 rounded-full ${
+              className={`w-2 h-2 rounded-full shrink-0 ${
                 isConnected
                   ? 'bg-emerald-500 ring-2 ring-emerald-500/20'
                   : data.connection_status === 'error'
-                  ? 'bg-rose-500'
+                  ? 'bg-rose-500 ring-2 ring-rose-500/20'
                   : 'bg-[#64748b]'
               }`}
             />
-            <span className="text-[11px] text-[#8b9cb4] hidden min-[440px]:inline">
+            <span
+              className={`text-[11px] font-medium ${
+                isConnected
+                  ? 'text-emerald-400'
+                  : data.connection_status === 'error'
+                  ? 'text-rose-400'
+                  : 'text-[#64748b]'
+              }`}
+            >
               {isConnected ? 'Connected' : data.connection_status === 'error' ? 'Error' : 'Not linked'}
             </span>
           </div>
@@ -156,19 +167,21 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
         </div>
       </div>
 
-      {/* Action Button: Touch-friendly min 44px */}
+      {/* Action Button: Consistent 40px height with focus-visible & touch-friendly */}
       <div className="pt-2">
         {isConnected ? (
           <button
             onClick={() => onManage(data.platform)}
-            className="w-full py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#172238] hover:bg-[#1f2d4a] text-[#cbd5e1] hover:text-white border border-[#22314e] transition-colors min-h-[44px] flex items-center justify-center active:scale-[0.98]"
+            aria-label={`Manage ${config.name} account`}
+            className="w-full h-10 py-2 px-3 rounded-lg text-xs font-semibold bg-[#172238] hover:bg-[#1f2d4a] text-[#cbd5e1] hover:text-white border border-[#22314e] transition-colors flex items-center justify-center active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101726]"
           >
             Manage account &rarr;
           </button>
         ) : (
           <button
             onClick={() => onConnect(data.platform)}
-            className="w-full py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#162035] hover:bg-blue-600/20 text-[#8b9cb4] hover:text-blue-400 border border-[#22314e] hover:border-blue-500/30 transition-colors min-h-[44px] flex items-center justify-center active:scale-[0.98]"
+            aria-label={`Connect ${config.name} account`}
+            className="w-full h-10 py-2 px-3 rounded-lg text-xs font-semibold bg-[#162035] hover:bg-blue-600/20 text-[#8b9cb4] hover:text-blue-400 border border-[#22314e] hover:border-blue-500/30 transition-colors flex items-center justify-center active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#101726]"
           >
             Connect account &rarr;
           </button>
