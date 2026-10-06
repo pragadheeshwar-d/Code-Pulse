@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, Plus, CheckCircle, Clock, Trash2 } from 'lucide-react';
+import { Target, Plus, Clock, Trash2 } from 'lucide-react';
 import { Goal } from '../types';
 
 interface GoalsPageProps {
@@ -21,40 +21,32 @@ export const GoalsPage: React.FC<GoalsPageProps> = ({
   });
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#1a2333]/80">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Coding Goals</h2>
-          <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
-            Set ambitious targets and track real mathematical progress from platform submissions.
-          </p>
-        </div>
-
-        <button
-          onClick={onCreateClick}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs sm:text-sm font-semibold transition-all self-start sm:self-auto shadow-sm min-h-[44px] active:scale-[0.98]"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create New Goal</span>
-        </button>
-      </div>
-
-      {/* Filter Tabs - Horizontally scrollable without breaking on small viewports */}
-      <div className="flex items-center gap-1 bg-[#101726] p-1 rounded-lg border border-[#1d263b] overflow-x-auto no-scrollbar touch-scroll max-w-full">
+    <div className="space-y-4 sm:space-y-5">
+      {/* Action Bar */}
+      <div className="flex items-center justify-between gap-3 pb-1">
+        <div className="flex items-center gap-1 bg-[var(--surface)] p-1 rounded-xl border border-[var(--border)] overflow-x-auto no-scrollbar touch-scroll">
         {(['all', 'active', 'completed', 'expired'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setFilter(tab)}
-            className={`px-3.5 py-1.5 rounded text-xs font-medium capitalize transition-colors shrink-0 min-h-[36px] active:scale-95 ${
+            className={`px-3 py-1 rounded text-xs font-semibold capitalize transition-all shrink-0 min-h-[30px] ${
               filter === tab
-                ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                : 'text-[#8b9cb4] hover:text-white hover:bg-[#162035]'
+                ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-sm font-bold'
+                : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg)]'
             }`}
           >
             {tab}
           </button>
         ))}
+        </div>
+
+        <button
+          onClick={onCreateClick}
+          className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-[var(--primary)] hover:opacity-90 text-[var(--on-primary)] font-bold rounded-xl text-xs transition-all shrink-0 min-h-[36px] active:scale-95 shadow-sm"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>New Goal</span>
+        </button>
       </div>
 
       {/* Goals Grid */}
@@ -63,47 +55,49 @@ export const GoalsPage: React.FC<GoalsPageProps> = ({
           {filteredGoals.map(goal => (
             <div
               key={goal.id}
-              className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:border-[#2a3754] transition-all space-y-4"
+              className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:border-[var(--accent)]/50 transition-all space-y-4 shadow-sm"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <Target className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                    <h3 className="font-semibold text-white text-sm line-clamp-2">{goal.title}</h3>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 rounded bg-[var(--warm)]/10 text-[var(--warm)] border border-[var(--warm)]/20 flex items-center justify-center shrink-0">
+                      <Target className="w-3.5 h-3.5 text-[var(--warm)]" />
+                    </div>
+                    <h3 className="font-semibold text-[var(--text)] text-sm line-clamp-2 font-sans">{goal.title}</h3>
                   </div>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-mono font-medium shrink-0 uppercase border ${
+                    className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold shrink-0 uppercase tracking-wider border ${
                       goal.status === 'completed'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        ? 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20'
                         : goal.status === 'expired'
-                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                        : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                        ? 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/20'
+                        : 'bg-[var(--warm)]/10 text-[var(--warm)] border-[var(--warm)]/20'
                     }`}
                   >
                     {goal.status}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-[#8b9cb4] mb-3">
+                <div className="flex items-center gap-2 text-xs text-[var(--muted)] mb-3">
                   <span className="capitalize">{goal.goal_type.replace(/_/g, ' ')}</span>
-                  <span>&bull;</span>
+                  <span>•</span>
                   <span className="capitalize">{goal.platform || 'All Platforms'}</span>
                 </div>
 
                 {/* Progress bar */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#8b9cb4]">
-                      <span className="font-mono text-white font-bold">{goal.current || 0}</span> / {goal.target} {goal.goal_type === 'problems_solved' ? 'Problems' : ''}
+                    <span className="text-[var(--muted)]">
+                      <span className="font-mono text-[var(--text)] font-bold">{goal.current || 0}</span> / {goal.target} {goal.goal_type === 'problems_solved' ? 'Problems' : ''}
                     </span>
-                    <span className="font-mono font-bold text-white text-xs">
+                    <span className="font-mono font-bold text-[var(--text)] text-xs">
                       {goal.progress_percentage || 0}%
                     </span>
                   </div>
-                  <div className="w-full h-2 bg-[#172238] rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-[var(--bg)] rounded-full overflow-hidden border border-[var(--border)]">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        goal.status === 'completed' ? 'bg-emerald-500' : 'bg-blue-500'
+                        goal.status === 'completed' ? 'bg-[var(--accent)]' : 'bg-[var(--warm)]'
                       }`}
                       style={{ width: `${Math.min(100, goal.progress_percentage || 0)}%` }}
                     />
@@ -111,16 +105,16 @@ export const GoalsPage: React.FC<GoalsPageProps> = ({
                 </div>
               </div>
 
-              {/* Card Footer with large touch target for delete */}
-              <div className="flex items-center justify-between pt-3 border-t border-[#1c263c] text-xs text-[#64748b]">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 shrink-0" />
-                  <span>Due: {goal.end_date}</span>
+              {/* Card Footer */}
+              <div className="flex items-center justify-between pt-3 border-t border-[var(--border)] text-xs text-[var(--muted)]">
+                <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                  <Clock className="w-3.5 h-3.5 text-[var(--muted)] shrink-0" />
+                  <span>Ends {goal.end_date}</span>
                 </div>
 
                 <button
                   onClick={() => onDeleteGoal(goal.id)}
-                  className="text-[#64748b] hover:text-rose-400 transition-colors p-2 -mr-2 rounded-lg hover:bg-rose-500/10 min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-95"
+                  className="text-[var(--muted)] hover:text-[var(--danger)] transition-colors p-1 rounded hover:bg-[var(--danger)]/10 flex items-center justify-center"
                   title="Delete goal"
                   aria-label={`Delete goal ${goal.title}`}
                 >
@@ -131,22 +125,23 @@ export const GoalsPage: React.FC<GoalsPageProps> = ({
           ))}
         </div>
       ) : (
-        <div className="bg-[#101726] border border-dashed border-[#1d263b] rounded-xl p-8 sm:p-12 text-center flex flex-col items-center justify-center">
-          <Target className="w-10 h-10 text-[#475569] mb-3" />
-          <h4 className="text-sm font-semibold text-white">No goals found</h4>
-          <p className="text-xs text-[#8b9cb4] mt-1 max-w-sm">
+        <div className="bg-[var(--surface)] border border-dashed border-[var(--border)] rounded-xl p-8 sm:p-12 text-center flex flex-col items-center justify-center">
+          <Target className="w-10 h-10 text-[var(--muted)] mb-3" />
+          <h4 className="text-sm font-semibold text-[var(--text)]">No goals found</h4>
+          <p className="text-xs text-[var(--muted)] mt-1 max-w-sm">
             {goals.length === 0
               ? 'Create your first goal to track target problems, active days, or contest ratings.'
               : `No ${filter} goals found.`}
           </p>
           <button
             onClick={onCreateClick}
-            className="mt-4 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-colors min-h-[44px] flex items-center"
+            className="mt-4 px-4 py-2 bg-[var(--primary)] hover:opacity-90 text-[var(--on-primary)] rounded-lg text-xs font-semibold transition-all min-h-[38px] flex items-center"
           >
-            Create a Goal &rarr;
+            Create a Goal →
           </button>
         </div>
       )}
     </div>
   );
 };
+

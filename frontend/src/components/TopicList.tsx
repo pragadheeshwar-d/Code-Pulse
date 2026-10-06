@@ -25,40 +25,42 @@ export const TopicList: React.FC<TopicListProps> = ({ topics }) => {
   const hasData = topics.some(t => t.count > 0);
 
   return (
-    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-blue-400 shrink-0" />
-          <h3 className="font-semibold text-white text-sm">DSA & Topic Coverage</h3>
+          <div className="w-6 h-6 rounded bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
+            <Layers className="w-3.5 h-3.5 text-[var(--accent)]" />
+          </div>
+          <h3 className="font-semibold text-[var(--text)] text-sm tracking-tight font-sans">DSA & Topic Coverage</h3>
         </div>
         {hasData && (
-          <span className="text-[10px] text-[#64748b] bg-[#162035] px-2 py-0.5 rounded border border-[#22314d]">
+          <span className="text-[10px] font-mono text-[var(--muted)] bg-[var(--bg)] px-2 py-0.5 rounded border border-[var(--border)]">
             Top Practiced
           </span>
         )}
       </div>
 
       {/* Topics List */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {displayTopics.map((topic, idx) => (
-          <div key={idx} className="flex items-center justify-between gap-2 sm:gap-3 text-xs">
-            <span className="text-[#8b9cb4] w-24 sm:w-32 truncate">{topic.name}</span>
+          <div key={idx} className="flex items-center justify-between gap-2.5 text-xs">
+            <span className="text-[var(--text)]/90 w-24 sm:w-32 truncate font-medium">{topic.name}</span>
 
             {/* Progress track */}
-            <div className="flex-1 h-1.5 bg-[#172238] rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-[var(--bg)] rounded-full overflow-hidden border border-[var(--border)]">
               <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                className="h-full bg-[var(--accent)] rounded-full transition-all duration-500"
                 style={{ width: `${hasData ? Math.min(100, Math.max(topic.percentage, 4)) : 0}%` }}
               />
             </div>
 
             {/* Count & Percentage */}
-            <div className="font-mono text-[#8b9cb4] w-14 sm:w-20 text-right shrink-0">
+            <div className="font-mono text-[var(--muted)] w-16 sm:w-20 text-right shrink-0">
               {hasData ? (
                 <span>
-                  <span className="text-white font-medium">{topic.count}</span>
-                  <span className="text-[10px] text-[#64748b] ml-1">({topic.percentage}%)</span>
+                  <span className="text-[var(--text)] font-semibold">{topic.count}</span>
+                  <span className="text-[10px] text-[var(--muted)] ml-1">({topic.percentage}%)</span>
                 </span>
               ) : (
                 '—%'

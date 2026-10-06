@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Target, Calendar } from 'lucide-react';
+import { X, Target } from 'lucide-react';
 import { PlatformType } from '../types';
 
 interface CreateGoalModalProps {
@@ -69,46 +69,46 @@ export const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#101726] border-t sm:border border-[#212f4d] rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto touch-scroll safe-bottom">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[var(--surface)] border-t sm:border border-[var(--border)] rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto touch-scroll safe-bottom">
         {/* Mobile bottom sheet grab handle */}
-        <div className="w-12 h-1 bg-gray-600/50 rounded-full mx-auto mb-3 sm:hidden" />
+        <div className="w-12 h-1 bg-[var(--border)] rounded-full mx-auto mb-3 sm:hidden" />
 
         <button
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute top-3 right-3 sm:top-5 sm:right-5 p-2 rounded-lg text-[#64748b] hover:text-white hover:bg-[#162035] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          className="absolute top-3 right-3 sm:top-5 sm:right-5 p-2 rounded-lg text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-2 mb-1">
-          <Target className="w-5 h-5 text-blue-400 shrink-0" />
-          <h3 className="text-lg font-bold text-white tracking-tight">Create Coding Goal</h3>
+          <Target className="w-5 h-5 text-[var(--warm)] shrink-0" />
+          <h3 className="text-lg font-bold text-[var(--text)] tracking-tight">Create Coding Goal</h3>
         </div>
-        <p className="text-xs text-[#8b9cb4]">
+        <p className="text-xs text-[var(--muted)]">
           Set a measurable target calculated directly from your real platform activity.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-4 sm:mt-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#cbd5e1] mb-1">Goal Title</label>
+            <label className="block text-xs font-medium text-[var(--text)] mb-1">Goal Title</label>
             <input
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g. Solve 50 Problems in 30 Days"
-              className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-base sm:text-sm text-white placeholder-[#475569] focus:outline-none focus:border-blue-500 min-h-[44px]"
+              className="w-full px-3.5 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-base sm:text-sm text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent)] min-h-[44px]"
             />
           </div>
 
           <div className="grid grid-cols-1 2xs:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#cbd5e1] mb-1">Goal Metric</label>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Goal Metric</label>
               <select
                 value={goalType}
                 onChange={e => setGoalType(e.target.value as any)}
-                className="w-full px-3 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
+                className="w-full px-3 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] min-h-[44px]"
               >
                 <option value="problems_solved">Problems Solved</option>
                 <option value="active_days">Active Days</option>
@@ -118,24 +118,24 @@ export const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#cbd5e1] mb-1">Target Value</label>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Target Value</label>
               <input
                 type="number"
                 value={target}
                 onChange={e => setTarget(e.target.value)}
                 min="1"
                 inputMode="numeric"
-                className="w-full px-3 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-base sm:text-sm font-mono text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
+                className="w-full px-3 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-base sm:text-sm font-mono text-[var(--text)] focus:outline-none focus:border-[var(--accent)] min-h-[44px]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#cbd5e1] mb-1">Platform</label>
+            <label className="block text-xs font-medium text-[var(--text)] mb-1">Platform</label>
             <select
               value={platform}
               onChange={e => setPlatform(e.target.value)}
-              className="w-full px-3 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
+              className="w-full px-3 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] min-h-[44px]"
             >
               <option value="all">All Connected Platforms</option>
               <option value="leetcode">LeetCode Only</option>
@@ -147,28 +147,28 @@ export const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
 
           <div className="grid grid-cols-1 2xs:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#cbd5e1] mb-1">Start Date</label>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Start Date</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
-                className="w-full px-3 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-base sm:text-xs text-white focus:outline-none focus:border-blue-500 font-mono min-h-[44px]"
+                className="w-full px-3 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-base sm:text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] font-mono min-h-[44px]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#cbd5e1] mb-1">End Date</label>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">End Date</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
-                className="w-full px-3 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-base sm:text-xs text-white focus:outline-none focus:border-blue-500 font-mono min-h-[44px]"
+                className="w-full px-3 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-base sm:text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] font-mono min-h-[44px]"
               />
             </div>
           </div>
 
           {error && (
-            <p className="text-xs text-rose-400 bg-rose-500/10 p-3 rounded-lg border border-rose-500/30">
+            <p className="text-xs text-[var(--danger)] bg-[var(--danger)]/10 p-3 rounded-lg border border-[var(--danger)]/30">
               {error}
             </p>
           )}
@@ -178,14 +178,14 @@ export const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2.5 text-xs font-semibold text-[#8b9cb4] hover:text-white transition-colors min-h-[44px] rounded-lg"
+              className="px-4 py-2.5 text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)] transition-colors min-h-[44px] rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !title.trim()}
-              className="flex items-center justify-center px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800/40 text-white transition-all shadow-sm min-h-[44px] active:scale-[0.98]"
+              className="flex items-center justify-center px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[var(--primary)] hover:opacity-90 disabled:opacity-40 text-[var(--on-primary)] transition-all shadow-sm min-h-[44px] active:scale-[0.98]"
             >
               {loading ? 'Creating...' : 'Create Goal'}
             </button>

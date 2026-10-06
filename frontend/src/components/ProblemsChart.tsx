@@ -45,36 +45,38 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
   const periodTotalSolved = hasData ? data.reduce((acc, cur) => acc + (cur.daily || 0), 0) : 0;
 
   return (
-    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
       {/* Chart Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-400 shrink-0" />
-              <h3 className="font-semibold text-white text-sm">Problems Solved Trajectory</h3>
+              <div className="w-6 h-6 rounded bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-3.5 h-3.5 text-[var(--accent)]" />
+              </div>
+              <h3 className="font-semibold text-[var(--text)] text-sm tracking-tight font-sans">Problems Solved Trajectory</h3>
             </div>
             {hasData && (
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
-                +{periodTotalSolved} in this period
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/25 shrink-0 font-medium">
+                +{periodTotalSolved} in window
               </span>
             )}
           </div>
-          <p className="text-[11px] sm:text-xs text-[#64748b] mt-0.5">
-            Continuous progression across all verified platforms
+          <p className="text-xs text-[var(--muted)] mt-1">
+            Verified cumulative trajectory across all connected competitive programming profiles
           </p>
         </div>
 
-        {/* Period Filter Buttons - Horizontally scrollable without breaking on small viewports */}
-        <div className="flex items-center gap-1 bg-[#162035] p-1 rounded-lg border border-[#22314d] self-start sm:self-auto overflow-x-auto no-scrollbar touch-scroll max-w-full">
+        {/* Period Filter Buttons */}
+        <div className="flex items-center gap-1 bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)] self-start sm:self-auto overflow-x-auto no-scrollbar touch-scroll max-w-full">
           {periods.map(p => (
             <button
               key={p}
               onClick={() => onPeriodChange(p.toLowerCase())}
-              className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors shrink-0 min-h-[32px] active:scale-95 ${
+              className={`px-2.5 py-1 rounded text-xs font-semibold transition-all shrink-0 min-h-[28px] ${
                 period.toUpperCase() === p
-                  ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                  : 'text-[#8b9cb4] hover:text-white hover:bg-[#1f2d48]'
+                  ? 'bg-[var(--primary)] text-[var(--on-primary)] font-bold shadow-sm'
+                  : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface)]'
               }`}
             >
               {p}
@@ -84,29 +86,29 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
       </div>
 
       {/* Chart Canvas or Empty State */}
-      <div className="h-56 sm:h-64 lg:h-72 w-full relative flex items-center justify-center">
+      <div className="h-60 sm:h-64 lg:h-72 w-full relative flex items-center justify-center pt-2">
         {hasData ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 5, left: -22, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
-                <linearGradient id="problemsGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                <linearGradient id="cyberEmeraldProblemsGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1b253b" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis
                 dataKey="date"
-                stroke="#64748b"
-                tick={{ fill: '#64748b', fontSize: 10 }}
+                stroke="var(--muted)"
+                tick={{ fill: 'var(--muted)', fontSize: 10 }}
                 tickFormatter={formatDateTick}
                 minTickGap={36}
                 tickLine={false}
-                axisLine={{ stroke: '#1b253b' }}
+                axisLine={{ stroke: 'var(--border)' }}
               />
               <YAxis
-                stroke="#64748b"
-                tick={{ fill: '#64748b', fontSize: 10 }}
+                stroke="var(--muted)"
+                tick={{ fill: 'var(--muted)', fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
                 domain={['auto', 'auto']}
@@ -117,15 +119,15 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
                     const point = payload[0].payload as ChartPoint;
                     const dateFormatted = formatDateTick(point.date);
                     return (
-                      <div className="bg-[#0d131f] border border-[#24324f] rounded-lg p-2.5 shadow-xl text-xs space-y-1 max-w-[240px]">
-                        <div className="font-semibold text-white">{dateFormatted} ({point.date})</div>
-                        <div className="flex items-center justify-between gap-3 text-[#94a3b8]">
-                          <span>Daily Activity:</span>
-                          <span className="font-mono text-emerald-400 font-medium">+{point.daily} solved</span>
+                      <div className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-3 shadow-2xl text-xs space-y-1.5 min-w-[180px]">
+                        <div className="font-semibold text-[var(--text)] border-b border-[var(--border)] pb-1 font-mono">{dateFormatted} ({point.date})</div>
+                        <div className="flex items-center justify-between gap-3 text-[var(--muted)]">
+                          <span>Daily Delta:</span>
+                          <span className="font-mono text-[var(--accent)] font-bold">+{point.daily} solved</span>
                         </div>
-                        <div className="flex items-center justify-between gap-3 text-[#94a3b8]">
-                          <span>Cumulative Total:</span>
-                          <span className="font-mono text-blue-400 font-bold">{point.cumulative} total</span>
+                        <div className="flex items-center justify-between gap-3 text-[var(--muted)]">
+                          <span>Cumulative:</span>
+                          <span className="font-mono text-[var(--accent)] font-bold">{point.cumulative} total</span>
                         </div>
                       </div>
                     );
@@ -136,31 +138,31 @@ export const ProblemsChart: React.FC<ProblemsChartProps> = ({
               <Area
                 type="monotone"
                 dataKey="cumulative"
-                stroke="#3b82f6"
+                stroke="var(--accent)"
                 strokeWidth={2}
                 fillOpacity={1}
-                fill="url(#problemsGradient)"
+                fill="url(#cyberEmeraldProblemsGradient)"
               />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex flex-col items-center justify-center text-center p-6 w-full h-full border border-dashed border-[#1b253b] rounded-lg">
+          <div className="flex flex-col items-center justify-center text-center p-6 w-full h-full border border-dashed border-[var(--border)] rounded-lg bg-[var(--bg)]/50">
             <svg
-              className="w-16 h-12 text-[#22314d] mb-3 stroke-current fill-none"
+              className="w-12 h-10 text-[var(--muted)]/40 mb-2 stroke-current fill-none"
               viewBox="0 0 100 50"
               strokeWidth="2"
             >
               <path d="M 0,35 Q 25,45 50,25 T 100,10" />
             </svg>
-            <p className="text-xs text-[#64748b] max-w-xs">
-              Connect a platform to start tracking your progress.
+            <p className="text-xs text-[var(--muted)] max-w-xs">
+              Link a platform to track your continuous problem-solving progression.
             </p>
             {onConnectClick && (
               <button
                 onClick={onConnectClick}
-                className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors min-h-[44px] flex items-center"
+                className="mt-2.5 text-xs text-[var(--accent)] hover:underline font-semibold transition-colors flex items-center gap-1"
               >
-                Connect account &rarr;
+                <span>Connect platform account →</span>
               </button>
             )}
           </div>

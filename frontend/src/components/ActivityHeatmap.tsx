@@ -30,37 +30,46 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     }
   }, [activityData]);
 
+  // Format Date object to local YYYY-MM-DD (prevents timezone shifts from toISOString)
+  const formatYYYYMMDD = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Build 52 weeks calendar grid (aligned Monday to Sunday, ending current week)
-  const { weeks, monthLabels } = useMemo(() => {
+  const { weeks, monthLabels, todayStr } = useMemo(() => {
     const dataMap = new Map<string, HeatmapDay>();
     for (const d of activityData) {
       dataMap.set(d.date, d);
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayStr = formatYYYYMMDD(today);
 
-    // Monday is day 1, Sunday is day 0 in JS getDay()
-    const currentDay = today.getDay();
+    // Get Monday of current week
+    const currentDay = today.getDay(); // 0 is Sunday, 1 is Monday...
     const daysSinceMonday = (currentDay + 6) % 7; // 0 for Mon, 6 for Sun
 
-    // Start on Monday 51 weeks ago (52 weeks total)
+    // Start 51 weeks before current week's Monday
     const startDate = new Date(today);
     startDate.setDate(today.getDate() - daysSinceMonday - (51 * 7));
     startDate.setHours(0, 0, 0, 0);
 
-    const resultWeeks: { dateStr: string; dayData: HeatmapDay | null; isFuture: boolean }[][] = [];
+    const resultWeeks: { dateStr: string; dayData: HeatmapDay | null; isFuture: boolean; isToday: boolean }[][] = [];
     const months: { label: string; weekIndex: number }[] = [];
     let lastMonth = -1;
 
     const cursor = new Date(startDate);
 
     for (let w = 0; w < 52; w++) {
-      const week: { dateStr: string; dayData: HeatmapDay | null; isFuture: boolean }[] = [];
+      const week: { dateStr: string; dayData: HeatmapDay | null; isFuture: boolean; isToday: boolean }[] = [];
 
       for (let d = 0; d < 7; d++) {
-        const dateStr = cursor.toISOString().split('T')[0];
-        const isFuture = cursor > today;
+        const dateStr = formatYYYYMMDD(cursor);
+        const isToday = dateStr === todayStr;
+        const isFuture = dateStr > todayStr;
         const dayData = dataMap.get(dateStr) || null;
 
         if (cursor.getMonth() !== lastMonth) {
@@ -71,58 +80,75 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           }
         }
 
-        week.push({ dateStr, dayData, isFuture });
+        week.push({ dateStr, dayData, isFuture, isToday });
         cursor.setDate(cursor.getDate() + 1);
       }
       resultWeeks.push(week);
     }
 
-    return { weeks: resultWeeks, monthLabels: months };
+    return { weeks: resultWeeks, monthLabels: months, todayStr };
   }, [activityData]);
 
-  const getColorClass = (level: number) => {
+  const getColorClass = (level: number, isToday: boolean) => {
+    let colorStyle = '';
     switch (level) {
       case 1:
-        return 'bg-blue-900/90 border-blue-700/60';
+        colorStyle = 'bg-[var(--heatmap-1)] border-[#0E4429]';
+        break;
       case 2:
-        return 'bg-blue-700 border-blue-500';
+        colorStyle = 'bg-[var(--heatmap-2)] border-[#006D32]';
+        break;
       case 3:
-        return 'bg-blue-500 border-blue-400';
+        colorStyle = 'bg-[var(--heatmap-3)] border-[#26A641]';
+        break;
       case 4:
-        return 'bg-blue-400 border-blue-300';
+        colorStyle = 'bg-[var(--heatmap-4)] border-[#39D353] shadow-[0_0_8px_rgba(57,211,83,0.5)]';
+        break;
       default:
-        return 'bg-[#141d2f] border-[#1d2942]';
+        colorStyle = 'bg-[var(--heatmap-0)] border-[var(--border)] hover:border-[var(--accent)]/80';
+        break;
     }
+
+    if (isToday) {
+      return `${colorStyle} ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--surface)] z-10`;
+    }
+    return colorStyle;
   };
 
   const formatTooltipDate = (dateStr: string) => {
     try {
-      const d = new Date(dateStr + 'T00:00:00Z');
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      return dateStr;
     } catch {
       return dateStr;
     }
   };
 
   return (
-    <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
-          <h3 className="font-semibold text-white text-sm">Coding Activity</h3>
+          <div className="w-6 h-6 rounded bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
+            <Calendar className="w-3.5 h-3.5 text-[var(--accent)]" />
+          </div>
+          <h3 className="font-semibold text-[var(--text)] text-sm tracking-tight font-sans">Activity Heatmap</h3>
         </div>
 
         {/* Platform Tabs */}
-        <div className="flex items-center gap-1 bg-[#162035] p-1 rounded-lg border border-[#22314d] self-start sm:self-auto overflow-x-auto no-scrollbar touch-scroll max-w-full">
+        <div className="flex items-center gap-1 bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)] self-start sm:self-auto overflow-x-auto no-scrollbar touch-scroll max-w-full">
           {platforms.map(p => (
             <button
               key={p.id}
               onClick={() => onSelectPlatform(p.id)}
-              className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap min-h-[32px] active:scale-95 ${
+              className={`px-2.5 py-1 rounded text-xs font-semibold transition-all whitespace-nowrap min-h-[28px] ${
                 selectedPlatform === p.id
-                  ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                  : 'text-[#8b9cb4] hover:text-white hover:bg-[#1f2d48]'
+                  ? 'bg-[var(--primary)] text-[var(--on-primary)] font-bold shadow-sm'
+                  : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface)]'
               }`}
             >
               {p.label}
@@ -131,14 +157,14 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
         </div>
       </div>
 
-      {/* Grid Container with touch momentum scroll */}
+      {/* Grid Container */}
       <div
         ref={scrollRef}
         className="overflow-x-auto pb-2 touch-scroll scroll-smooth"
       >
         <div className="min-w-[760px]">
-          {/* Month Labels Positioned Accurately Above Columns */}
-          <div className="relative h-4 mb-1.5 ml-8 text-[10px] text-[#64748b]">
+          {/* Month Labels */}
+          <div className="relative h-4 mb-1.5 ml-8 text-[10px] text-[var(--muted)] font-mono">
             {monthLabels.map((m, idx) => (
               <span
                 key={idx}
@@ -151,8 +177,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           </div>
 
           <div className="flex gap-2">
-            {/* Weekday Labels (Mon, Wed, Fri, Sun mapped to rows 0, 2, 4, 6) */}
-            <div className="flex flex-col justify-between text-[10px] text-[#64748b] py-0.5 select-none w-6 shrink-0 h-[95px]">
+            {/* Weekday Labels */}
+            <div className="flex flex-col justify-between text-[10px] text-[var(--muted)] py-0.5 select-none w-6 shrink-0 h-[95px] font-mono">
               <span>Mon</span>
               <span>Wed</span>
               <span>Fri</span>
@@ -185,16 +211,18 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                       else if (totalCount >= 1) level = 1;
                     }
 
+                    const isToday = day.isToday;
                     const titleText = totalCount > 0
-                      ? `${formatTooltipDate(day.dateStr)}: ${solved} solved, ${subs} submissions`
-                      : `${formatTooltipDate(day.dateStr)}: No activity recorded`;
+                      ? `${formatTooltipDate(day.dateStr)}${isToday ? ' (Today)' : ''}: ${solved} solved, ${subs} submissions`
+                      : `${formatTooltipDate(day.dateStr)}${isToday ? ' (Today)' : ''}: No activity recorded`;
 
                     return (
                       <div
                         key={dIdx}
                         title={titleText}
                         className={`w-[11px] h-[11px] rounded-[2px] border ${getColorClass(
-                          level
+                          level,
+                          isToday
                         )} transition-transform hover:scale-125 cursor-pointer`}
                       />
                     );
@@ -207,18 +235,22 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       </div>
 
       {/* Heatmap Legend */}
-      <div className="flex flex-col 2xs:flex-row items-start 2xs:items-center justify-between gap-2 text-xs text-[#64748b] mt-3 pt-3 border-t border-[#1a2333]/80">
-        <span className="text-[11px] text-[#64748b] sm:hidden">← Swipe to see full history</span>
+      <div className="flex flex-col 2xs:flex-row items-start 2xs:items-center justify-between gap-2 text-xs text-[var(--muted)] mt-3 pt-3 border-t border-[var(--border)]">
+        <div className="flex items-center gap-1.5 text-[11px] text-[var(--accent)] font-mono">
+          <span className="w-2 h-2 rounded-full bg-[var(--accent)] ring-2 ring-[var(--accent)]/50 inline-block shrink-0" />
+          <span>Today ({todayStr}) highlighted with ring</span>
+        </div>
+
         <div className="flex items-center gap-2 self-end 2xs:self-auto ml-auto">
-          <span className="text-[11px]">Less</span>
+          <span className="text-[10px] text-[var(--muted)] font-mono">Less</span>
           <div className="flex gap-1 items-center">
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-[#141d2f] border border-[#1d2942]" />
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-900/90 border border-blue-700/60" />
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-700 border border-blue-500" />
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-500 border border-blue-400" />
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-blue-400 border border-blue-300" />
+            <div title="No activity" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-0)] border border-[var(--border)]" />
+            <div title="1-2 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-1)] border border-[#0E4429]" />
+            <div title="3-5 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-2)] border border-[#006D32]" />
+            <div title="6-9 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-3)] border border-[#26A641]" />
+            <div title="10+ solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-4)] border border-[#39D353]" />
           </div>
-          <span className="text-[11px]">More</span>
+          <span className="text-[10px] text-[var(--muted)] font-mono">More</span>
         </div>
       </div>
     </div>

@@ -12,33 +12,57 @@ export default {
         'xs': '420px',
       },
       colors: {
-        background: '#090d16',
+        bg: 'var(--bg)',
         surface: {
-          DEFAULT: '#111726',
-          card: '#131b2e',
-          hover: '#1a233a',
-          border: '#1e293b'
+          DEFAULT: 'var(--surface)',
+          card: 'var(--surface)',
+          elevated: 'var(--surface)',
+          hover: 'var(--border)',
+          border: 'var(--border)'
         },
+        border: 'var(--border)',
+        primary: {
+          DEFAULT: 'var(--primary)',
+          foreground: 'var(--on-primary)',
+        },
+        'on-primary': 'var(--on-primary)',
+        accent: {
+          DEFAULT: 'var(--accent)',
+        },
+        text: 'var(--text)',
+        muted: 'var(--muted)',
+        warm: 'var(--warm)',
+        danger: 'var(--danger)',
+        heatmap: {
+          0: 'var(--heatmap-0)',
+          1: 'var(--heatmap-1)',
+          2: 'var(--heatmap-2)',
+          3: 'var(--heatmap-3)',
+          4: 'var(--heatmap-4)',
+        },
+        background: 'var(--bg)',
         brand: {
-          blue: '#2563eb',
-          'blue-hover': '#1d4ed8',
-          accent: '#3b82f6',
+          blue: 'var(--accent)',
+          'blue-hover': 'var(--accent)',
+          accent: 'var(--accent)',
+          emerald: 'var(--accent)',
+          mint: 'var(--accent)',
         },
         diff: {
-          easy: '#10b981',
-          medium: '#f59e0b',
-          hard: '#ef4444'
+          easy: 'var(--accent)',
+          medium: 'var(--warm)',
+          hard: 'var(--danger)'
         },
         platform: {
-          leetcode: '#ffa116',
-          codechef: '#b57948',
-          geeksforgeeks: '#2f9d54',
-          codeforces: '#3b82f6'
+          leetcode: 'var(--warm)',
+          codechef: 'var(--warm)',
+          geeksforgeeks: 'var(--accent)',
+          codeforces: 'var(--accent)'
         }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+        mono: ['JetBrains Mono', 'Fira Code', 'SFMono-Regular', 'Menlo', 'monospace']
       }
     },
   },

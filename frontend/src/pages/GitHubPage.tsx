@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GitBranch, GitPullRequest, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Star, Users, FolderGit2 } from 'lucide-react';
+import { ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Users, FolderGit2, GitPullRequest } from 'lucide-react';
 import { api } from '../services/api';
 import { UserProfile } from '../types';
 
@@ -7,7 +7,7 @@ interface GitHubPageProps {
   user: UserProfile | null;
 }
 
-export const GitHubPage: React.FC<GitHubPageProps> = ({ user }) => {
+export const GitHubPage: React.FC<GitHubPageProps> = () => {
   const [username, setUsername] = useState('');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -43,48 +43,48 @@ export const GitHubPage: React.FC<GitHubPageProps> = ({ user }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       {/* Page Header */}
-      <div className="pb-4 border-b border-[#1a2333]/80">
-        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">GitHub Integration</h2>
-        <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
-          Connect your GitHub account to sync public repositories, commit activity, and developer contributions.
+      <div className="pb-4 border-b border-[var(--border)]">
+        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text)] tracking-tight font-sans">GitHub Telemetry Integration</h2>
+        <p className="text-xs sm:text-sm text-[var(--muted)] mt-1">
+          Link your GitHub handle to cross-reference open source contributions alongside competitive programming statistics.
         </p>
       </div>
 
       {/* GitHub Account Connect Form */}
-      <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-6">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 shadow-sm">
         <form onSubmit={handleConnect} className="space-y-4">
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-[#cbd5e1] mb-1.5">
-              GitHub Username or Handle
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--muted)] mb-1.5 font-mono">
+              GitHub Username
             </label>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-2.5">
               <div className="relative flex-1">
                 <input
                   type="text"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   placeholder="e.g. torvalds, octocat"
-                  className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-sm text-white placeholder-[#64748b] focus:outline-none focus:border-blue-500 font-mono min-h-[44px]"
+                  className="w-full px-3.5 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] placeholder-[var(--muted)]/60 focus:outline-none focus:border-[var(--accent)] font-mono min-h-[38px]"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading || !username.trim()}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800/40 text-white rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.98]"
+                className="px-4 py-2 bg-[var(--primary)] hover:opacity-90 disabled:opacity-50 text-[var(--on-primary)] rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 min-h-[38px]"
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                <span>{loading ? 'Connecting...' : 'Connect GitHub'}</span>
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>{loading ? 'Linking...' : 'Connect GitHub'}</span>
               </button>
             </div>
-            <p className="text-[11px] sm:text-xs text-[#64748b] mt-1.5">
-              CodePulse queries public GitHub user profile metrics to track your open source footprint alongside competitive coding.
+            <p className="text-[11px] text-[var(--muted)] mt-1.5 font-mono">
+              Queries public GitHub GraphQL/REST APIs to track repositories and followers alongside problem telemetry.
             </p>
           </div>
 
           {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-center gap-2 text-xs sm:text-sm text-rose-400">
+            <div className="p-3 bg-[var(--danger)]/10 border border-[var(--danger)]/30 rounded-lg flex items-center gap-2 text-xs text-[var(--danger)]">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -94,29 +94,29 @@ export const GitHubPage: React.FC<GitHubPageProps> = ({ user }) => {
 
       {/* GitHub Profile Card */}
       {data?.connected && (
-        <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-5 sm:p-6 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1c263c]">
-            <div className="flex items-center gap-4">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5 space-y-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
+            <div className="flex items-center gap-3.5">
               {data.avatar_url ? (
                 <img
                   src={data.avatar_url}
                   alt={data.username}
-                  className="w-14 h-14 rounded-xl border border-[#2a3854] object-cover"
+                  className="w-12 h-12 rounded-xl border border-[var(--border)] object-cover"
                 />
               ) : (
-                <div className="w-14 h-14 rounded-xl bg-[#162035] border border-[#2a3854] flex items-center justify-center font-bold text-xl text-white">
+                <div className="w-12 h-12 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center font-bold text-sm text-[var(--text)] font-mono">
                   GH
                 </div>
               )}
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base sm:text-lg font-bold text-white">@{data.username}</h3>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <h3 className="text-base font-bold text-[var(--text)] font-sans">@{data.username}</h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 font-mono uppercase tracking-wider">
                     <CheckCircle2 className="w-3 h-3" />
-                    <span>Verified</span>
+                    <span>Linked</span>
                   </span>
                 </div>
-                {data.bio && <p className="text-xs text-[#8b9cb4] mt-0.5 max-w-md">{data.bio}</p>}
+                {data.bio && <p className="text-xs text-[var(--muted)] mt-0.5 max-w-md">{data.bio}</p>}
               </div>
             </div>
 
@@ -125,7 +125,7 @@ export const GitHubPage: React.FC<GitHubPageProps> = ({ user }) => {
                 href={data.profile_url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#162035] hover:bg-[#1f2d48] text-white border border-[#22314d] rounded-lg text-xs font-semibold transition-colors min-h-[44px] self-start sm:self-auto"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[var(--bg)] hover:bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] rounded-lg text-xs font-semibold transition-colors min-h-[38px] self-start sm:self-auto"
               >
                 <span>View on GitHub</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -135,33 +135,33 @@ export const GitHubPage: React.FC<GitHubPageProps> = ({ user }) => {
 
           {/* GitHub Metrics Grid */}
           <div className="grid grid-cols-1 2xs:grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="p-4 bg-[#141d2f] border border-[#1e2a42] rounded-xl flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                <FolderGit2 className="w-5 h-5 text-blue-400" />
+            <div className="p-3.5 bg-[var(--bg)] border border-[var(--border)] rounded-xl flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
+                <FolderGit2 className="w-4 h-4 text-[var(--accent)]" />
               </div>
               <div>
-                <span className="text-xs text-[#8b9cb4]">Public Repos</span>
-                <p className="text-xl sm:text-2xl font-bold text-white font-mono">{data.public_repos ?? 0}</p>
+                <span className="text-[10px] text-[var(--muted)] uppercase tracking-wider font-semibold block font-mono">Public Repos</span>
+                <p className="text-lg font-bold text-[var(--text)] font-mono mt-0.5">{data.public_repos ?? 0}</p>
               </div>
             </div>
 
-            <div className="p-4 bg-[#141d2f] border border-[#1e2a42] rounded-xl flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                <Users className="w-5 h-5 text-purple-400" />
+            <div className="p-3.5 bg-[var(--bg)] border border-[var(--border)] rounded-xl flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
+                <Users className="w-4 h-4 text-[var(--accent)]" />
               </div>
               <div>
-                <span className="text-xs text-[#8b9cb4]">Followers</span>
-                <p className="text-xl sm:text-2xl font-bold text-white font-mono">{data.followers ?? 0}</p>
+                <span className="text-[10px] text-[var(--muted)] uppercase tracking-wider font-semibold block font-mono">Followers</span>
+                <p className="text-lg font-bold text-[var(--text)] font-mono mt-0.5">{data.followers ?? 0}</p>
               </div>
             </div>
 
-            <div className="p-4 bg-[#141d2f] border border-[#1e2a42] rounded-xl flex items-center gap-3 2xs:col-span-2 sm:col-span-1">
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                <GitPullRequest className="w-5 h-5 text-emerald-400" />
+            <div className="p-3.5 bg-[var(--bg)] border border-[var(--border)] rounded-xl flex items-center gap-3 2xs:col-span-2 sm:col-span-1">
+              <div className="w-8 h-8 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
+                <GitPullRequest className="w-4 h-4 text-[var(--accent)]" />
               </div>
               <div>
-                <span className="text-xs text-[#8b9cb4]">Sync Status</span>
-                <p className="text-base font-semibold text-emerald-400 font-mono mt-0.5">Active</p>
+                <span className="text-[10px] text-[var(--muted)] uppercase tracking-wider font-semibold block font-mono">Telemetry Sync</span>
+                <p className="text-xs font-semibold text-[var(--accent)] font-mono mt-0.5 uppercase tracking-wider">Active</p>
               </div>
             </div>
           </div>
@@ -170,3 +170,4 @@ export const GitHubPage: React.FC<GitHubPageProps> = ({ user }) => {
     </div>
   );
 };
+

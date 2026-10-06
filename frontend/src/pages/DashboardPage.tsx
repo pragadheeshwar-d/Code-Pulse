@@ -7,22 +7,13 @@ import {
   Sparkles
 } from 'lucide-react';
 import { MetricCard } from '../components/MetricCard';
-import { PlatformCard } from '../components/PlatformCard';
 import { ProblemsChart } from '../components/ProblemsChart';
-import { ActivityHeatmap } from '../components/ActivityHeatmap';
-import { DifficultyChart } from '../components/DifficultyChart';
-import { TopicList } from '../components/TopicList';
-import { GoalsWidget } from '../components/GoalsWidget';
 import { RecentActivityTable } from '../components/RecentActivityTable';
 import {
   PlatformCardData,
   DashboardOverview,
   ChartPoint,
-  HeatmapDay,
-  DifficultyData,
-  TopicData,
   RecentProblem,
-  Goal,
   PlatformType
 } from '../types';
 
@@ -32,20 +23,20 @@ interface DashboardPageProps {
   chartData: ChartPoint[];
   period: string;
   onPeriodChange: (period: string) => void;
-  activityData: HeatmapDay[];
-  selectedPlatform: string;
-  onSelectPlatform: (p: string) => void;
-  difficultyData: DifficultyData;
-  topicsData: TopicData[];
-  goals: Goal[];
   recentProblems: RecentProblem[];
   insights: string[];
   onConnectPlatform: (platform: PlatformType) => void;
-  onManagePlatform: (platform: PlatformType) => void;
-  onCreateGoal: () => void;
   onViewAllProblems: () => void;
-  onViewAllGoals: () => void;
-  onDeleteGoal: (id: string) => void;
+  activityData?: any;
+  selectedPlatform?: string;
+  onSelectPlatform?: (p: string) => void;
+  difficultyData?: any;
+  topicsData?: any;
+  goals?: any[];
+  onManagePlatform?: (platform: PlatformType) => void;
+  onCreateGoal?: () => void;
+  onViewAllGoals?: () => void;
+  onDeleteGoal?: (id: string) => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
@@ -54,20 +45,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   chartData,
   period,
   onPeriodChange,
-  activityData,
-  selectedPlatform,
-  onSelectPlatform,
-  difficultyData,
-  topicsData,
-  goals,
   recentProblems,
   insights,
   onConnectPlatform,
-  onManagePlatform,
-  onCreateGoal,
-  onViewAllProblems,
-  onViewAllGoals,
-  onDeleteGoal
+  onViewAllProblems
 }) => {
   const anyConnected = platforms.some(p => p.connected);
   const totalSolvedFromPlatforms = platforms.reduce((sum, p) => sum + (p.stats?.total_solved || 0), 0);
@@ -85,98 +66,77 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning 👋';
-    if (hour < 17) return 'Good Afternoon 👋';
-    return 'Good Evening 👋';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
   };
 
   return (
     <div className="space-y-6">
-      {/* 0. Greeting Banner */}
-      <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+      {/* 0. Hero Greeting Banner */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-sm">
         <div className="min-w-0">
-          <h2 className="text-xl font-bold text-white tracking-tight">{getGreeting()}</h2>
-          <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">Your verified coding progress overview</p>
+          <h2 className="text-lg sm:text-xl font-bold text-[var(--text)] tracking-tight font-sans">
+            {getGreeting()}, Developer
+          </h2>
+          <p className="text-xs text-[var(--muted)] mt-0.5">
+            Verified competitive programming stats & problem-solving progression
+          </p>
         </div>
         {currentStreak !== null && currentStreak !== undefined ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 self-start sm:self-auto font-mono text-xs font-semibold shrink-0 whitespace-nowrap">
-            <Flame className="w-4 h-4 text-amber-500 shrink-0" />
-            <span>{currentStreak} Day Streak</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--warm)]/10 border border-[var(--warm)]/20 text-[var(--warm)] self-start sm:self-auto font-mono text-xs font-semibold shrink-0 whitespace-nowrap">
+            <Flame className="w-4 h-4 text-[var(--warm)] shrink-0" />
+            <span>{currentStreak} Day Active Streak</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#141d2f] border border-[#212f4d] text-[#64748b] self-start sm:self-auto text-xs font-medium shrink-0 whitespace-nowrap">
-            <span>Real-time telemetry</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] self-start sm:self-auto text-xs font-medium shrink-0 whitespace-nowrap">
+            <span>Real-time Sync Active</span>
           </div>
         )}
       </div>
 
-      {/* 1. Top Metrics Cards (4-col on desktop, 2-col on tablet, 1-col on mobile) */}
+      {/* 1. Essential Top Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 xl:gap-4">
         <MetricCard
-          title="Total Problems"
+          title="Total Problems Solved"
           value={totalProblems}
           icon={ListOrdered}
-          iconColor="text-blue-400"
+          iconColor="text-[var(--accent)]"
           hasData={effectiveHasData}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
-          title="Active Days"
+          title="Active Solving Days"
           value={activeDays}
           icon={Calendar}
-          iconColor="text-emerald-400"
+          iconColor="text-[var(--accent)]"
           hasData={effectiveHasData}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
-          title="Current Streak"
+          title="Current Active Streak"
           value={effectiveHasData && currentStreak !== null && currentStreak !== undefined ? `${currentStreak} day${currentStreak === 1 ? '' : 's'}` : null}
           icon={Flame}
-          iconColor="text-amber-500"
+          iconColor="text-[var(--warm)]"
           hasData={effectiveHasData}
           badge={effectiveHasData && longestStreak ? `Max: ${longestStreak}d` : undefined}
-          subtitle={effectiveHasData && longestStreak ? `Max streak: ${longestStreak} days` : 'Verified platform data'}
+          subtitle={effectiveHasData && longestStreak ? `Max streak: ${longestStreak} days` : 'Verified stats'}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
           title="Total Submissions"
           value={totalSubmissions}
           icon={CloudUpload}
-          iconColor="text-sky-400"
+          iconColor="text-[var(--accent)]"
           hasData={effectiveHasData}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
       </div>
 
-      {/* 2. Your Platforms Section */}
-      <div>
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-white tracking-tight">Your Platforms</h2>
-            <span className="text-xs text-[#64748b]">
-              {anyConnected ? 'Synced accounts' : 'Connect to track'}
-            </span>
-          </div>
-        </div>
-
-        {/* 4 Platform Cards (4-col on desktop, 2-col on tablet, 1-col on mobile) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 xl:gap-4">
-          {platforms.map(p => (
-            <PlatformCard
-              key={p.platform}
-              data={p}
-              onConnect={onConnectPlatform}
-              onManage={onManagePlatform}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 3. Main Dashboard Grid (Left 2 cols, Right 1 col) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (Span 2) */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-          {/* Problems Solved Chart */}
+      {/* 2. Main Essential Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 xl:gap-6">
+        {/* Left Column (Span 2): Solved Trajectory Chart */}
+        <div className="lg:col-span-2">
           <ProblemsChart
             data={chartData}
             period={period}
@@ -184,53 +144,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             hasConnectedPlatforms={anyConnected}
             onConnectClick={() => onConnectPlatform('leetcode')}
           />
+        </div>
 
-          {/* Coding Activity Heatmap */}
-          <ActivityHeatmap
-            activityData={activityData}
-            selectedPlatform={selectedPlatform}
-            onSelectPlatform={onSelectPlatform}
-          />
-
-          {/* Recent Activity Table */}
+        {/* Right Column (Span 1): Recent Submissions */}
+        <div className="lg:col-span-1">
           <RecentActivityTable
             problems={recentProblems}
             onViewAllClick={onViewAllProblems}
-            limit={5}
+            limit={6}
           />
-        </div>
-
-        {/* Right Column (Span 1) */}
-        <div className="space-y-4 sm:space-y-6">
-          {/* Goals Widget */}
-          <GoalsWidget
-            goals={goals}
-            onCreateClick={onCreateGoal}
-            onViewAllClick={onViewAllGoals}
-            onDeleteGoal={onDeleteGoal}
-            isCompact={true}
-          />
-
-          {/* Difficulty Donut Breakdown */}
-          <DifficultyChart data={difficultyData} />
-
-          {/* Problem Solving Topics */}
-          <TopicList topics={topicsData} />
         </div>
       </div>
 
-      {/* 4. Smart Insights (Factual observations derived from real data) */}
+      {/* 3. Performance Insights */}
       {insights.length > 0 && (
-        <div className="bg-[#101726] border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="w-4 h-4 text-blue-400" />
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 flex items-start gap-3 shadow-sm">
+          <div className="w-7 h-7 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center shrink-0 mt-0.5">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" />
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-white tracking-wide uppercase">Smart Factual Insights</h4>
-            <div className="mt-1 space-y-1">
+            <h4 className="text-xs font-semibold text-[var(--text)] tracking-wide uppercase font-mono">Performance Insights</h4>
+            <div className="mt-1.5 space-y-1">
               {insights.map((ins, i) => (
-                <p key={i} className="text-xs text-[#94a3b8] flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-blue-400 shrink-0" />
+                <p key={i} className="text-xs text-[var(--text)]/90 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0" />
                   <span>{ins}</span>
                 </p>
               ))}

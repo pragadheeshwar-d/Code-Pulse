@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
+import { Trophy, ExternalLink } from 'lucide-react';
 import { ContestRecord } from '../types';
 
 interface ContestsPageProps {
@@ -9,18 +9,18 @@ interface ContestsPageProps {
 
 export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectClick }) => {
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="pb-4 border-b border-[#1a2333]/80">
-        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Contest History</h2>
-        <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
-          Real contest participation, leaderboard ranks, and rating changes across Codeforces, LeetCode, and CodeChef.
+      <div className="pb-4 border-b border-[var(--border)]">
+        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text)] tracking-tight font-sans">Contest History</h2>
+        <p className="text-xs sm:text-sm text-[var(--muted)] mt-1">
+          Verified contest participation, leaderboard ranks, and rating deltas across Codeforces, LeetCode, and CodeChef.
         </p>
       </div>
 
       {contests.length > 0 ? (
         <>
-          {/* 1. Mobile Cards View (< md) */}
+          {/* Mobile Cards View (< md) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 md:hidden">
             {contests.map((c, idx) => {
               const change = c.rating_change;
@@ -30,42 +30,42 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
               return (
                 <div
                   key={idx}
-                  className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 flex flex-col justify-between hover:border-[#2a3854] transition-all space-y-3"
+                  className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 flex flex-col justify-between hover:border-[var(--accent)]/50 transition-all space-y-3 shadow-sm"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-[var(--accent)] uppercase tracking-wider font-mono">
                         {c.platform}
                       </span>
-                      <span className="text-[11px] font-mono text-[#8b9cb4]">
+                      <span className="text-[11px] font-mono text-[var(--muted)]">
                         {new Date(c.contest_date).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold text-white leading-snug line-clamp-2">
+                    <h3 className="text-sm font-bold text-[var(--text)] leading-snug line-clamp-2 font-sans">
                       {c.name}
                     </h3>
                   </div>
 
                   {/* Contest Stats Grid */}
-                  <div className="grid grid-cols-3 gap-2 p-2.5 bg-[#141d2f] border border-[#1e2a42] rounded-lg text-center">
+                  <div className="grid grid-cols-3 gap-2 p-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-center">
                     <div>
-                      <span className="text-[10px] text-[#64748b] block">Rank</span>
-                      <span className="text-xs font-mono font-bold text-white">
+                      <span className="text-[10px] text-[var(--muted)] block uppercase font-mono">Rank</span>
+                      <span className="text-xs font-mono font-bold text-[var(--text)]">
                         {c.rank !== null && c.rank !== undefined ? `#${c.rank}` : '—'}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-[#64748b] block">Rating</span>
-                      <span className="text-xs font-mono font-bold text-white">
+                      <span className="text-[10px] text-[var(--muted)] block uppercase font-mono">Rating</span>
+                      <span className="text-xs font-mono font-bold text-[var(--text)]">
                         {c.rating_after !== null && c.rating_after !== undefined ? c.rating_after : '—'}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-[#64748b] block">Change</span>
+                      <span className="text-[10px] text-[var(--muted)] block uppercase font-mono">Delta</span>
                       <span
                         className={`text-xs font-mono font-bold ${
-                          isPositive ? 'text-emerald-400' : isNegative ? 'text-rose-400' : 'text-[#8b9cb4]'
+                          isPositive ? 'text-[var(--accent)]' : isNegative ? 'text-[var(--danger)]' : 'text-[var(--muted)]'
                         }`}
                       >
                         {change !== null && change !== undefined ? (isPositive ? `+${change}` : change) : '—'}
@@ -79,9 +79,9 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
                       href={c.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-[#162035] hover:bg-[#1f2d48] text-blue-400 hover:text-blue-300 border border-[#22314d] flex items-center justify-center gap-1.5 transition-colors min-h-[40px] active:scale-[0.98]"
+                      className="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-[var(--surface)] hover:bg-[var(--border)] text-[var(--accent)] border border-[var(--border)] flex items-center justify-center gap-1.5 transition-colors min-h-[38px]"
                     >
-                      <span>View Contest Standings</span>
+                      <span>Standings →</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
@@ -90,57 +90,57 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
             })}
           </div>
 
-          {/* 2. Desktop Table View (>= md) */}
-          <div className="bg-[#101726] border border-[#1d263b] rounded-xl overflow-hidden hidden md:block">
+          {/* Desktop Table View (>= md) */}
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden hidden md:block shadow-sm">
             <div className="overflow-x-auto touch-scroll">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-[#1c263c] bg-[#141d2f]/50 text-[#64748b]">
-                    <th className="py-3 px-4 font-medium">Platform</th>
-                    <th className="py-3 px-4 font-medium">Contest Name</th>
-                    <th className="py-3 px-4 font-medium">Date</th>
-                    <th className="py-3 px-4 font-medium text-center">Rank</th>
-                    <th className="py-3 px-4 font-medium text-center">Old Rating</th>
-                    <th className="py-3 px-4 font-medium text-center">New Rating</th>
-                    <th className="py-3 px-4 font-medium text-right">Change</th>
+                  <tr className="border-b border-[var(--border)] bg-[var(--bg)]/50 text-[var(--muted)] font-mono text-[10px] uppercase tracking-wider">
+                    <th className="py-3 px-4 font-semibold">Platform</th>
+                    <th className="py-3 px-4 font-semibold">Contest Name</th>
+                    <th className="py-3 px-4 font-semibold">Date</th>
+                    <th className="py-3 px-4 font-semibold text-center">Rank</th>
+                    <th className="py-3 px-4 font-semibold text-center">Old Rating</th>
+                    <th className="py-3 px-4 font-semibold text-center">New Rating</th>
+                    <th className="py-3 px-4 font-semibold text-right">Delta</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#172238]">
+                <tbody className="divide-y divide-[var(--border)]">
                   {contests.map((c, idx) => {
                     const change = c.rating_change;
                     const isPositive = typeof change === 'number' && change > 0;
                     const isNegative = typeof change === 'number' && change < 0;
 
                     return (
-                      <tr key={idx} className="hover:bg-[#141d2f] transition-colors">
-                        <td className="py-3 px-4 font-semibold capitalize text-white">
+                      <tr key={idx} className="hover:bg-[var(--bg)] transition-colors">
+                        <td className="py-3 px-4 font-semibold capitalize text-[var(--text)]">
                           {c.platform}
                         </td>
-                        <td className="py-3 px-4 text-white font-medium max-w-xs truncate">
+                        <td className="py-3 px-4 text-[var(--text)] font-semibold max-w-xs truncate">
                           {c.url ? (
                             <a
                               href={c.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="hover:text-blue-400 inline-flex items-center gap-1.5 transition-colors"
+                              className="hover:text-[var(--accent)] inline-flex items-center gap-1.5 transition-colors"
                             >
                               <span className="truncate">{c.name}</span>
-                              <ExternalLink className="w-3 h-3 text-[#64748b] shrink-0" />
+                              <ExternalLink className="w-3 h-3 text-[var(--muted)] shrink-0" />
                             </a>
                           ) : (
                             c.name
                           )}
                         </td>
-                        <td className="py-3 px-4 font-mono text-[#8b9cb4]">
+                        <td className="py-3 px-4 font-mono text-[var(--muted)]">
                           {new Date(c.contest_date).toLocaleDateString()}
                         </td>
-                        <td className="py-3 px-4 text-center font-mono text-white">
+                        <td className="py-3 px-4 text-center font-mono text-[var(--text)]">
                           {c.rank !== null && c.rank !== undefined ? `#${c.rank}` : '—'}
                         </td>
-                        <td className="py-3 px-4 text-center font-mono text-[#8b9cb4]">
+                        <td className="py-3 px-4 text-center font-mono text-[var(--muted)]">
                           {c.rating_before !== null && c.rating_before !== undefined ? c.rating_before : '—'}
                         </td>
-                        <td className="py-3 px-4 text-center font-mono text-white font-semibold">
+                        <td className="py-3 px-4 text-center font-mono text-[var(--text)] font-semibold">
                           {c.rating_after !== null && c.rating_after !== undefined ? c.rating_after : '—'}
                         </td>
                         <td className="py-3 px-4 text-right font-mono font-bold">
@@ -148,16 +148,16 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
                             <span
                               className={`inline-flex items-center gap-0.5 ${
                                 isPositive
-                                  ? 'text-emerald-400'
+                                  ? 'text-[var(--accent)]'
                                   : isNegative
-                                  ? 'text-rose-400'
-                                  : 'text-[#8b9cb4]'
+                                  ? 'text-[var(--danger)]'
+                                  : 'text-[var(--muted)]'
                               }`}
                             >
                               {isPositive ? `+${change}` : change}
                             </span>
                           ) : (
-                            <span className="text-[#64748b]">—</span>
+                            <span className="text-[var(--muted)]/50">—</span>
                           )}
                         </td>
                       </tr>
@@ -169,20 +169,21 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
           </div>
         </>
       ) : (
-        <div className="bg-[#101726] border border-dashed border-[#1d263b] rounded-xl p-8 sm:p-12 text-center flex flex-col items-center justify-center">
-          <Trophy className="w-10 h-10 text-[#475569] mb-3" />
-          <h4 className="text-sm font-semibold text-white">No contest history recorded</h4>
-          <p className="text-xs text-[#8b9cb4] mt-1 max-w-sm">
-            Participate in rated contests on Codeforces, LeetCode, or CodeChef and sync your account to track your rating changes.
+        <div className="bg-[var(--surface)] border border-dashed border-[var(--border)] rounded-xl p-8 sm:p-12 text-center flex flex-col items-center justify-center">
+          <Trophy className="w-10 h-10 text-[var(--muted)] mb-3" />
+          <h4 className="text-sm font-semibold text-[var(--text)]">No contest history recorded</h4>
+          <p className="text-xs text-[var(--muted)] mt-1 max-w-sm">
+            Participate in rated contests on Codeforces, LeetCode, or CodeChef and sync your account to track rating changes.
           </p>
           <button
             onClick={onConnectClick}
-            className="mt-4 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-colors min-h-[44px] flex items-center"
+            className="mt-4 px-4 py-2 bg-[var(--primary)] hover:opacity-90 text-[var(--on-primary)] rounded-lg text-xs font-semibold transition-all min-h-[38px] flex items-center"
           >
-            Connect Platform &rarr;
+            Connect Platform →
           </button>
         </div>
       )}
     </div>
   );
 };
+

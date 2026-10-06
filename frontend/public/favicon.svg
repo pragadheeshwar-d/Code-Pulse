@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="16" fill="#17181B"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" stroke="#34D399" stroke-opacity="0.4" stroke-width="2"/>
+  <!-- Code brackets + Pulse wave -->
+  <path d="M16 26L10 32L16 38" stroke="#34D399" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M48 26L54 32L48 38" stroke="#34D399" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Pulse Wave in center -->
+  <path d="M20 32H26L29 22L34 42L39 26L42 32H45" stroke="#34D399" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

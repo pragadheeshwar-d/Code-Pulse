@@ -72,22 +72,22 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#101726] border-t sm:border border-[#212f4d] rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto touch-scroll safe-bottom">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[var(--surface)] border-t sm:border border-[var(--border)] rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto touch-scroll safe-bottom">
         {/* Mobile bottom sheet grab handle */}
-        <div className="w-12 h-1 bg-gray-600/50 rounded-full mx-auto mb-3 sm:hidden" />
+        <div className="w-12 h-1 bg-[var(--border)] rounded-full mx-auto mb-3 sm:hidden" />
 
         {/* Close Button */}
         <button
           onClick={onClose}
           aria-label="Close connect modal"
-          className="absolute top-3 right-3 sm:top-5 sm:right-5 p-2 rounded-lg text-[#64748b] hover:text-white hover:bg-[#162035] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          className="absolute top-3 right-3 sm:top-5 sm:right-5 p-2 rounded-lg text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-lg font-bold text-white tracking-tight">Connect Coding Platform</h3>
-        <p className="text-xs text-[#8b9cb4] mt-1">
+        <h3 className="text-lg font-bold text-[var(--text)] tracking-tight">Connect Coding Platform</h3>
+        <p className="text-xs text-[var(--muted)] mt-1">
           Paste your public profile link or enter your username to automatically track your verified statistics.
         </p>
 
@@ -103,8 +103,8 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
               }}
               className={`p-3 rounded-lg border text-xs font-semibold text-left transition-all min-h-[44px] active:scale-[0.98] ${
                 selectedPlatform === p.id
-                  ? 'border-blue-500 bg-blue-600/10 text-white shadow-sm'
-                  : 'border-[#1e293b] bg-[#141d2f] text-[#8b9cb4] hover:border-[#2a3854] hover:text-white'
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] shadow-sm'
+                  : 'border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] hover:border-[var(--border)] hover:text-[var(--text)]'
               }`}
             >
               {p.name}
@@ -115,7 +115,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-4 sm:mt-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#cbd5e1] mb-1.5">
+            <label className="block text-xs font-medium text-[var(--text)] mb-1.5">
               {currentConfig.name} Profile Link or Username
             </label>
             <div className="relative">
@@ -127,27 +127,27 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
                 disabled={loading}
                 autoCapitalize="none"
                 autoCorrect="off"
-                className="w-full px-3.5 py-2.5 bg-[#141d2f] border border-[#22314e] rounded-lg text-base sm:text-sm text-white placeholder-[#475569] focus:outline-none focus:border-blue-500 transition-colors font-mono min-h-[44px]"
+                className="w-full px-3.5 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-base sm:text-sm text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent)] transition-colors font-mono min-h-[44px]"
               />
             </div>
 
             {/* Live Detected Handle preview */}
             {inputValue.trim() && isUrlInput && detectedUsername && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1.5 rounded-md font-mono">
-                <Link2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                <span className="text-[#8b9cb4]">Detected Handle:</span>
-                <span className="text-white font-semibold">@{detectedUsername}</span>
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--accent)] bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-2.5 py-1.5 rounded-md font-mono">
+                <Link2 className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+                <span className="text-[var(--muted)]">Detected Handle:</span>
+                <span className="text-[var(--text)] font-semibold">@{detectedUsername}</span>
               </div>
             )}
 
-            <p className="text-[11px] text-[#64748b] mt-1.5">
-              Paste URL (e.g. <span className="text-[#8b9cb4] font-mono">{currentConfig.exampleUrl}</span>) or your handle.
+            <p className="text-[11px] text-[var(--muted)] mt-1.5">
+              Paste URL (e.g. <span className="text-[var(--text)] font-mono">{currentConfig.exampleUrl}</span>) or your handle.
             </p>
           </div>
 
           {/* Error Banner */}
           {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-start gap-2.5 text-xs text-rose-400">
+            <div className="p-3 bg-[var(--danger)]/10 border border-[var(--danger)]/30 rounded-lg flex items-start gap-2.5 text-xs text-[var(--danger)]">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -155,7 +155,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
 
           {/* Success Banner */}
           {success && (
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center gap-2 text-xs text-emerald-400">
+            <div className="p-3 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-lg flex items-center gap-2 text-xs text-[var(--accent)]">
               <CheckCircle className="w-4 h-4 shrink-0" />
               <span>
                 Account {detectedUsername ? `@${detectedUsername}` : ''} verified & connected successfully!
@@ -169,16 +169,16 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2.5 text-xs font-semibold text-[#8b9cb4] hover:text-white transition-colors min-h-[44px] rounded-lg"
+              className="px-4 py-2.5 text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)] transition-colors min-h-[44px] rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !inputValue.trim()}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800/40 disabled:text-[#64748b] text-white transition-all shadow-sm min-h-[44px] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[var(--primary)] hover:opacity-90 disabled:opacity-40 text-[var(--on-primary)] transition-all shadow-sm min-h-[44px] active:scale-[0.98]"
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading && <Loader2 className="w-4 h-4 animate-spin text-[var(--on-primary)]" />}
               <span>{loading ? 'Verifying...' : 'Connect & Sync'}</span>
             </button>
           </div>

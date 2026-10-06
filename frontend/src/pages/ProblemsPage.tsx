@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ExternalLink, Filter, FileCode2, CheckCircle2, LayoutGrid, Table as TableIcon, ArrowUpDown } from 'lucide-react';
-import { RecentProblem, PlatformType } from '../types';
+import { Search, ExternalLink, FileCode2, CheckCircle2, LayoutGrid, Table as TableIcon } from 'lucide-react';
+import { RecentProblem } from '../types';
 
 interface ProblemsPageProps {
   problems: RecentProblem[];
@@ -35,28 +35,28 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
   const getDifficultyBadge = (diff: string) => {
     switch (diff.toLowerCase()) {
       case 'easy':
-        return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+        return 'text-[var(--accent)] bg-[var(--accent)]/10 border-[var(--accent)]/20';
       case 'medium':
-        return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+        return 'text-[var(--warm)] bg-[var(--warm)]/10 border-[var(--warm)]/20';
       case 'hard':
-        return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+        return 'text-[var(--danger)] bg-[var(--danger)]/10 border-[var(--danger)]/20';
       default:
-        return 'text-[#94a3b8] bg-[#1e293b] border-[#334155]';
+        return 'text-[var(--muted)] bg-[var(--surface)] border-[var(--border)]';
     }
   };
 
   const getPlatformLabel = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'leetcode':
-        return <span className="text-[#ffa116]">LeetCode</span>;
+        return <span className="text-[var(--warm)] font-semibold">LeetCode</span>;
       case 'codechef':
-        return <span className="text-[#d97706]">CodeChef</span>;
+        return <span className="text-[var(--warm)] font-semibold">CodeChef</span>;
       case 'geeksforgeeks':
-        return <span className="text-[#10b981]">GFG</span>;
+        return <span className="text-[var(--accent)] font-semibold">GFG</span>;
       case 'codeforces':
-        return <span className="text-[#3b82f6]">Codeforces</span>;
+        return <span className="text-[var(--accent)] font-semibold">Codeforces</span>;
       default:
-        return <span>{platform}</span>;
+        return <span className="text-[var(--text)] font-semibold capitalize">{platform}</span>;
     }
   };
 
@@ -70,27 +70,27 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       {/* Page Header */}
-      <div className="pb-4 border-b border-[#1a2333]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="pb-4 border-b border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Solved Problems</h2>
-          <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
-            Real problems verified and aggregated across your connected coding accounts.
+          <h2 className="text-xl sm:text-2xl font-bold text-[var(--text)] tracking-tight font-sans">Solved Problems Library</h2>
+          <p className="text-xs sm:text-sm text-[var(--muted)] mt-1">
+            Aggregated collection of verified problems solved across your connected competitive programming profiles.
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          <span className="text-xs text-[#8b9cb4] bg-[#101726] border border-[#1d263b] px-3 py-1.5 rounded-lg font-mono">
-            Showing <strong className="text-white">{filteredProblems.length}</strong> of <strong className="text-blue-400">{problems.length}</strong>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+          <span className="text-xs text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-lg font-mono">
+            Showing <strong className="text-[var(--text)]">{filteredProblems.length}</strong> of <strong className="text-[var(--accent)]">{problems.length}</strong>
           </span>
 
-          {/* View toggle (cards / table) */}
-          <div className="hidden sm:flex items-center gap-1 bg-[#101726] border border-[#1d263b] p-1 rounded-lg">
+          {/* View toggle */}
+          <div className="hidden sm:flex items-center gap-1 bg-[var(--surface)] border border-[var(--border)] p-1 rounded-lg">
             <button
               onClick={() => setViewMode(viewMode === 'cards' ? 'auto' : 'cards')}
               title="Cards View"
               className={`p-1.5 rounded text-xs transition ${
-                viewMode === 'cards' ? 'bg-blue-600 text-white' : 'text-[#8b9cb4] hover:text-white'
+                viewMode === 'cards' ? 'bg-[var(--primary)] text-[var(--on-primary)]' : 'text-[var(--muted)] hover:text-[var(--text)]'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -99,7 +99,7 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
               onClick={() => setViewMode(viewMode === 'table' ? 'auto' : 'table')}
               title="Table View"
               className={`p-1.5 rounded text-xs transition ${
-                viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-[#8b9cb4] hover:text-white'
+                viewMode === 'table' ? 'bg-[var(--primary)] text-[var(--on-primary)]' : 'text-[var(--muted)] hover:text-[var(--text)]'
               }`}
             >
               <TableIcon className="w-3.5 h-3.5" />
@@ -108,29 +108,26 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
         </div>
       </div>
 
-      {/* Filters & Search - Fully Touch & Mobile Friendly */}
+      {/* Filters & Search */}
       <div className="space-y-3">
-        {/* Search Input: text-[16px] on mobile to prevent iOS automatic zoom */}
         <div className="relative w-full">
-          <Search className="w-4 h-4 text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-[var(--muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="search"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search problems by name..."
-            className="w-full pl-10 pr-4 py-2.5 bg-[#101726] border border-[#1d263b] rounded-xl text-base sm:text-xs text-white placeholder-[#64748b] focus:outline-none focus:border-blue-500 transition-colors min-h-[44px]"
+            placeholder="Search problems by title..."
+            className="w-full pl-10 pr-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-xs text-[var(--text)] placeholder-[var(--muted)]/60 focus:outline-none focus:border-[var(--accent)] transition-colors min-h-[40px]"
           />
         </div>
 
-        {/* Filter & Sort Dropdowns: mobile-friendly touch targets */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {/* Platform filter */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           <div>
             <label className="sr-only">Platform</label>
             <select
               value={selectedPlatform}
               onChange={e => setSelectedPlatform(e.target.value)}
-              className="w-full px-3 py-2 bg-[#101726] border border-[#1d263b] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
+              className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] min-h-[38px] font-medium"
             >
               <option value="all">All Platforms</option>
               <option value="leetcode">LeetCode</option>
@@ -140,13 +137,12 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
             </select>
           </div>
 
-          {/* Difficulty filter */}
           <div>
             <label className="sr-only">Difficulty</label>
             <select
               value={selectedDiff}
               onChange={e => setSelectedDiff(e.target.value)}
-              className="w-full px-3 py-2 bg-[#101726] border border-[#1d263b] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
+              className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] min-h-[38px] font-medium"
             >
               <option value="all">All Difficulties</option>
               <option value="easy">Easy</option>
@@ -155,13 +151,12 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
             </select>
           </div>
 
-          {/* Sort order */}
           <div className="col-span-2 sm:col-span-1">
             <label className="sr-only">Sort by</label>
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value as any)}
-              className="w-full px-3 py-2 bg-[#101726] border border-[#1d263b] rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 min-h-[44px]"
+              className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] min-h-[38px] font-medium"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -171,28 +166,26 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
         </div>
       </div>
 
-      {/* Problem Display: Responsive Cards on Mobile / Table on Desktop */}
+      {/* Problem Display */}
       {filteredProblems.length > 0 ? (
         <>
-          {/* A. Mobile Cards View (Visible on mobile/tablet or if Cards mode selected) */}
+          {/* Mobile Cards */}
           <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3.5 ${viewMode === 'table' ? 'hidden' : viewMode === 'cards' ? 'block' : 'md:hidden'}`}>
             {filteredProblems.map((prob, idx) => (
               <div
                 key={idx}
-                className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 flex flex-col justify-between hover:border-[#2a3854] transition-all space-y-3"
+                className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 flex flex-col justify-between hover:border-[var(--accent)]/50 transition-all space-y-3 shadow-sm"
               >
                 <div>
-                  {/* Title */}
-                  <h3 className="text-base font-bold text-white tracking-tight leading-snug line-clamp-2">
+                  <h3 className="text-sm font-bold text-[var(--text)] tracking-tight leading-snug line-clamp-2">
                     {prob.title}
                   </h3>
 
-                  {/* Platform & Difficulty */}
-                  <div className="flex items-center gap-2 mt-1.5 text-xs">
+                  <div className="flex items-center gap-2 mt-2 text-xs">
                     <span className="font-medium">{getPlatformLabel(prob.platform)}</span>
-                    <span className="text-[#64748b]">•</span>
+                    <span className="text-[var(--border)]">•</span>
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${getDifficultyBadge(
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${getDifficultyBadge(
                         prob.difficulty
                       )}`}
                     >
@@ -201,61 +194,59 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
                   </div>
                 </div>
 
-                {/* Status & Date */}
-                <div className="pt-2 border-t border-[#1c263c] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-[var(--accent)] font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Solved</span>
                   </div>
-                  <span className="text-[#8b9cb4] font-mono text-[11px]">
+                  <span className="text-[var(--muted)] font-mono text-[11px]">
                     {formatDate(prob.date)}
                   </span>
                 </div>
 
-                {/* View Problem Action */}
                 {prob.url ? (
                   <a
                     href={prob.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#162035] hover:bg-[#1f2d48] text-blue-400 hover:text-blue-300 border border-[#22314d] flex items-center justify-center gap-1.5 transition-colors min-h-[44px] active:scale-[0.98]"
+                    className="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-[var(--surface)] hover:bg-[var(--border)] text-[var(--accent)] border border-[var(--border)] flex items-center justify-center gap-1.5 transition-colors min-h-[38px]"
                   >
                     <span>View Problem</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 ) : (
-                  <div className="w-full py-2 text-center text-xs text-[#64748b]">
-                    Logged via sync
+                  <div className="w-full py-2 text-center text-xs text-[var(--muted)] font-mono">
+                    Verified Telemetry
                   </div>
                 )}
               </div>
             ))}
           </div>
 
-          {/* B. Desktop Table View (Visible on desktop or if Table mode forced) */}
-          <div className={`bg-[#101726] border border-[#1d263b] rounded-xl overflow-hidden ${viewMode === 'cards' ? 'hidden' : viewMode === 'table' ? 'block' : 'hidden md:block'}`}>
+          {/* Desktop Table */}
+          <div className={`bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden shadow-sm ${viewMode === 'cards' ? 'hidden' : viewMode === 'table' ? 'block' : 'hidden md:block'}`}>
             <div className="overflow-x-auto touch-scroll">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-[#1c263c] bg-[#141d2f]/50 text-[#64748b]">
-                    <th className="py-3 px-4 font-medium">Problem</th>
-                    <th className="py-3 px-4 font-medium">Platform</th>
-                    <th className="py-3 px-4 font-medium">Difficulty</th>
-                    <th className="py-3 px-4 font-medium">Status</th>
-                    <th className="py-3 px-4 font-medium">Date</th>
-                    <th className="py-3 px-4 font-medium text-right">Actions</th>
+                  <tr className="border-b border-[var(--border)] bg-[var(--bg)]/50 text-[var(--muted)] font-mono text-[10px] uppercase tracking-wider">
+                    <th className="py-3 px-4 font-semibold">Problem</th>
+                    <th className="py-3 px-4 font-semibold">Platform</th>
+                    <th className="py-3 px-4 font-semibold">Difficulty</th>
+                    <th className="py-3 px-4 font-semibold">Status</th>
+                    <th className="py-3 px-4 font-semibold">Date</th>
+                    <th className="py-3 px-4 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#172238]">
+                <tbody className="divide-y divide-[var(--border)]">
                   {filteredProblems.map((prob, idx) => (
-                    <tr key={idx} className="hover:bg-[#141d2f] transition-colors">
-                      <td className="py-3 px-4 text-white font-medium max-w-xs truncate">
+                    <tr key={idx} className="hover:bg-[var(--bg)] transition-colors">
+                      <td className="py-3 px-4 text-[var(--text)] font-semibold max-w-xs truncate">
                         {prob.title}
                       </td>
                       <td className="py-3 px-4 font-medium">{getPlatformLabel(prob.platform)}</td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-0.5 rounded text-[11px] font-medium border ${getDifficultyBadge(
+                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${getDifficultyBadge(
                             prob.difficulty
                           )}`}
                         >
@@ -263,12 +254,12 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
+                        <span className="inline-flex items-center gap-1.5 text-[var(--accent)] font-medium">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Solved</span>
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-mono text-[#8b9cb4]">
+                      <td className="py-3 px-4 font-mono text-[var(--muted)]">
                         {formatDate(prob.date)}
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -277,13 +268,13 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
                             href={prob.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors p-1"
+                            className="inline-flex items-center gap-1 text-[var(--accent)] hover:underline font-medium transition-colors"
                             title="View Problem"
                           >
-                            <span>View &rarr;</span>
+                            <span>View →</span>
                           </a>
                         ) : (
-                          <span className="text-[#64748b]">—</span>
+                          <span className="text-[var(--muted)]/50">—</span>
                         )}
                       </td>
                     </tr>
@@ -294,10 +285,10 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
           </div>
         </>
       ) : (
-        <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center bg-[#101726] border border-dashed border-[#1d263b] rounded-xl">
-          <FileCode2 className="w-10 h-10 text-[#475569] mb-3" />
-          <h4 className="text-sm font-semibold text-white">No problems found</h4>
-          <p className="text-xs text-[#8b9cb4] mt-1 max-w-sm">
+        <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center bg-[var(--surface)] border border-dashed border-[var(--border)] rounded-xl">
+          <FileCode2 className="w-10 h-10 text-[var(--muted)] mb-3" />
+          <h4 className="text-sm font-semibold text-[var(--text)]">No problems found</h4>
+          <p className="text-xs text-[var(--muted)] mt-1 max-w-sm">
             {problems.length === 0
               ? 'Connect a coding platform to sync your solved problems.'
               : 'No problems match your current search and filter criteria.'}
@@ -305,9 +296,9 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
           {problems.length === 0 && (
             <button
               onClick={onConnectClick}
-              className="mt-4 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-colors min-h-[44px] flex items-center"
+              className="mt-4 px-4 py-2 bg-[var(--primary)] hover:opacity-90 text-[var(--on-primary)] rounded-lg text-xs font-semibold transition-all min-h-[38px] flex items-center"
             >
-              Connect a Platform &rarr;
+              Connect a Platform →
             </button>
           )}
         </div>
@@ -315,3 +306,4 @@ export const ProblemsPage: React.FC<ProblemsPageProps> = ({ problems, onConnectC
     </div>
   );
 };
+

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, TrendingUp, Sparkles, PieChart as PieIcon, Layers } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { ProblemsChart } from '../components/ProblemsChart';
 import { DifficultyChart } from '../components/DifficultyChart';
 import { TopicList } from '../components/TopicList';
@@ -27,14 +27,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
   onConnectClick
 }) => {
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="pb-4 border-b border-[#1a2333]/80">
-        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Progress Analytics</h2>
-        <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
-          Mathematical metrics, growth curves, and skill distributions derived from your coding history.
-        </p>
-      </div>
+    <div className="space-y-4 sm:space-y-5">
 
       {/* Main Trends Chart */}
       <ProblemsChart
@@ -46,16 +39,18 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
       />
 
       {/* Grid: Difficulty + Topics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
         <DifficultyChart data={difficultyData} />
         <TopicList topics={topicsData} />
       </div>
 
-      {/* Smart Factual Insights */}
-      <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-5">
+      {/* Analytical Observations */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
-          <h3 className="font-semibold text-white text-sm">Factual Analytical Observations</h3>
+          <div className="w-6 h-6 rounded bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" />
+          </div>
+          <h3 className="font-semibold text-[var(--text)] text-sm tracking-tight font-sans">Telemetry Observations</h3>
         </div>
 
         {insights.length > 0 ? (
@@ -63,19 +58,20 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({
             {insights.map((ins, i) => (
               <div
                 key={i}
-                className="p-3 bg-[#162035] border border-[#212f4d] rounded-lg text-xs text-[#cbd5e1] flex items-start gap-2.5"
+                className="p-3 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)]/90 flex items-start gap-2.5"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mt-1 shrink-0" />
                 <span>{ins}</span>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-xs text-[#64748b] py-3">
-            Not enough historical data collected yet to produce factual comparisons. Connect platforms and sync to track progress over time.
+          <p className="text-xs text-[var(--muted)] py-3 font-mono">
+            Insufficient historical telemetry points collected yet. Link platforms and sync to track progress over time.
           </p>
         )}
       </div>
     </div>
   );
 };
+

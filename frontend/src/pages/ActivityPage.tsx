@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Flame, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, Flame } from 'lucide-react';
 import { ActivityHeatmap } from '../components/ActivityHeatmap';
 import { HeatmapDay, DashboardOverview } from '../types';
 
@@ -15,50 +15,42 @@ export const ActivityPage: React.FC<ActivityPageProps> = ({
   activityData,
   selectedPlatform,
   onSelectPlatform,
-  overview,
-  onConnectClick
+  overview
 }) => {
   const activeDaysList = activityData.filter(d => d.count > 0).sort((a, b) => b.date.localeCompare(a.date));
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="pb-4 border-b border-[#1a2333]/80">
-        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Coding Activity Log</h2>
-        <p className="text-xs sm:text-sm text-[#8b9cb4] mt-0.5">
-          Real-time daily activity heatmap and chronological submission calendar.
-        </p>
-      </div>
+    <div className="space-y-4 sm:space-y-5">
 
       {/* Top summary cards */}
       <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 sm:gap-4">
-        <div className="p-3.5 sm:p-4 bg-[#101726] border border-[#1d263b] rounded-xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <Calendar className="w-5 h-5 text-emerald-400" />
+        <div className="p-4 bg-[var(--surface)] border border-[var(--border)] rounded-xl flex items-center gap-3 shadow-sm">
+          <div className="w-9 h-9 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
+            <Calendar className="w-4 h-4 text-[var(--accent)]" />
           </div>
           <div>
-            <span className="text-xs text-[#8b9cb4]">Active Days</span>
-            <p className="text-lg sm:text-xl font-bold text-white font-mono">{overview?.active_days ?? 0}</p>
+            <span className="text-[10px] text-[var(--muted)] uppercase tracking-wider font-semibold block font-mono">Active Days</span>
+            <p className="text-lg font-bold text-[var(--text)] font-mono mt-0.5">{overview?.active_days ?? 0}</p>
           </div>
         </div>
 
-        <div className="p-3.5 sm:p-4 bg-[#101726] border border-[#1d263b] rounded-xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-amber-500" />
+        <div className="p-4 bg-[var(--surface)] border border-[var(--border)] rounded-xl flex items-center gap-3 shadow-sm">
+          <div className="w-9 h-9 rounded-lg bg-[var(--warm)]/10 border border-[var(--warm)]/20 flex items-center justify-center shrink-0">
+            <Flame className="w-4 h-4 text-[var(--warm)]" />
           </div>
           <div>
-            <span className="text-xs text-[#8b9cb4]">Current Streak</span>
-            <p className="text-lg sm:text-xl font-bold text-white font-mono">{overview?.current_streak ?? 0} days</p>
+            <span className="text-[10px] text-[var(--muted)] uppercase tracking-wider font-semibold block font-mono">Current Streak</span>
+            <p className="text-lg font-bold text-[var(--warm)] font-mono mt-0.5">{overview?.current_streak ?? 0} days</p>
           </div>
         </div>
 
-        <div className="p-3.5 sm:p-4 bg-[#101726] border border-[#1d263b] rounded-xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-blue-400" />
+        <div className="p-4 bg-[var(--surface)] border border-[var(--border)] rounded-xl flex items-center gap-3 shadow-sm">
+          <div className="w-9 h-9 rounded-lg bg-[var(--warm)]/10 border border-[var(--warm)]/20 flex items-center justify-center shrink-0">
+            <Flame className="w-4 h-4 text-[var(--warm)]" />
           </div>
           <div>
-            <span className="text-xs text-[#8b9cb4]">Longest Streak</span>
-            <p className="text-lg sm:text-xl font-bold text-white font-mono">{overview?.longest_streak ?? 0} days</p>
+            <span className="text-[10px] text-[var(--muted)] uppercase tracking-wider font-semibold block font-mono">Max Streak</span>
+            <p className="text-lg font-bold text-[var(--warm)] font-mono mt-0.5">{overview?.longest_streak ?? 0} days</p>
           </div>
         </div>
       </div>
@@ -71,21 +63,21 @@ export const ActivityPage: React.FC<ActivityPageProps> = ({
       />
 
       {/* Day by Day Log Table */}
-      <div className="bg-[#101726] border border-[#1d263b] rounded-xl p-4 sm:p-5">
-        <h3 className="font-semibold text-white text-sm mb-4">Daily Activity Timeline</h3>
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 shadow-sm">
+        <h3 className="font-semibold text-[var(--text)] text-sm mb-4 font-sans tracking-tight">Daily Activity Timeline</h3>
 
         {activeDaysList.length > 0 ? (
-          <div className="divide-y divide-[#172238] max-h-96 overflow-y-auto pr-1">
+          <div className="divide-y divide-[var(--border)] max-h-96 overflow-y-auto pr-1">
             {activeDaysList.map((day, idx) => (
-              <div key={idx} className="py-3 flex flex-col min-[360px]:flex-row min-[360px]:items-center justify-between gap-2 text-xs">
+              <div key={idx} className="py-2.5 flex flex-col min-[360px]:flex-row min-[360px]:items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                  <span className="font-mono text-white font-medium">{day.date}</span>
+                  <div className="w-2 h-2 rounded-full bg-[var(--accent)] shrink-0" />
+                  <span className="font-mono text-[var(--text)] font-medium">{day.date}</span>
                   <div className="flex items-center gap-1 flex-wrap">
                     {day.platforms.map((p, pIdx) => (
                       <span
                         key={pIdx}
-                        className="px-1.5 py-0.5 rounded text-[10px] bg-[#162035] text-[#8b9cb4] border border-[#212f4d] capitalize font-medium"
+                        className="px-1.5 py-0.5 rounded text-[10px] bg-[var(--bg)] text-[var(--muted)] border border-[var(--border)] capitalize font-mono font-medium"
                       >
                         {p}
                       </span>
@@ -93,24 +85,25 @@ export const ActivityPage: React.FC<ActivityPageProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-[#8b9cb4] font-mono text-[11px] sm:text-xs">
+                <div className="flex items-center gap-3 text-[var(--muted)] font-mono text-[11px]">
                   <span>
-                    <strong className="text-white">{day.problems_solved}</strong> solved
+                    <strong className="text-[var(--text)] font-semibold">{day.problems_solved}</strong> solved
                   </span>
                   <span>•</span>
                   <span>
-                    <strong className="text-white">{day.submissions}</strong> subs
+                    <strong className="text-[var(--text)] font-semibold">{day.submissions}</strong> subs
                   </span>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-xs text-[#64748b] py-6 text-center">
-            No coding activity recorded for this period. Connect a platform to start tracking.
+          <p className="text-xs text-[var(--muted)] py-6 text-center font-mono">
+            No active submissions recorded for this timeframe. Connect a platform to start tracking.
           </p>
         )}
       </div>
     </div>
   );
 };
+

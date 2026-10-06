@@ -279,7 +279,7 @@ export const App: React.FC = () => {
   };
 
   if (authStatus === 'checking') {
-    return <div className="min-h-screen bg-[#090d16]" aria-label="Checking your session" />;
+    return <div className="min-h-screen bg-[var(--bg)]" aria-label="Checking your session" />;
   }
 
   if (authStatus === 'unauthenticated') {
@@ -297,7 +297,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-[#090d16] text-[#e2e8f0]">
+    <div className="min-h-screen min-h-[100dvh] bg-[var(--bg)] text-[var(--text)]">
       {/* Responsive layout: Single-column flex on mobile, 2-column CSS Grid on desktop (>= lg) */}
       <div className="min-h-screen min-h-[100dvh] flex flex-col lg:grid lg:grid-cols-[224px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
         {/* Sidebar: Desktop persistent (Column 1) + Mobile drawer */}
@@ -332,7 +332,7 @@ export const App: React.FC = () => {
           />
 
           <main className="flex-1 min-w-0 w-full px-3 xs:px-4 sm:px-6 lg:px-5 xl:px-8 pt-3 xs:pt-4 sm:pt-6 lg:pt-8 content-bottom-safe">
-          {/* Dashboard Page Header */}
+          {/* Main Top Header */}
           <Header
             user={user}
             lastSyncedText={getLastSyncedText()}
@@ -341,6 +341,7 @@ export const App: React.FC = () => {
             onOpenProfile={() => {
               setCurrentTab('settings');
             }}
+            currentTab={currentTab}
             variant="desktop"
           />
 

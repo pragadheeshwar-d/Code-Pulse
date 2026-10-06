@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #0E0F11;
+  --surface: #17181B;
+  --border: #26282D;
+  --primary: #E4E4E7;
+  --on-primary: #111214;
+  --accent: #34D399;
+  --text: #ECECEF;
+  --muted: #A1A1AA;
+  --warm: #F5B94A;
+  --danger: #F87171;
+
+  /* Heatmap levels */
+  --heatmap-0: #202226;
+  --heatmap-1: #0E4429;
+  --heatmap-2: #006D32;
+  --heatmap-3: #26A641;
+  --heatmap-4: #39D353;
+}
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
@@ -11,9 +31,11 @@
   }
 
   body {
-    background-color: #090d16;
-    color: #e2e8f0;
+    background-color: var(--bg);
+    color: var(--text);
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     max-width: 100vw;
     min-height: 100vh;
@@ -23,21 +45,21 @@
 
 /* Custom developer-grade scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d121f;
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+  background: var(--border);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--muted);
 }
 
 /* Safe area support for iOS notches & home indicators */
@@ -56,7 +78,7 @@
 
 @media (min-width: 1024px) {
   .content-bottom-safe {
-    padding-bottom: 2rem !important; /* 32px - matches desktop lg:pb-8 */
+    padding-bottom: 2rem !important;
   }
 }
 
@@ -73,6 +95,35 @@
 .touch-scroll {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
+}
+
+/* Glass & Card subtle utilities */
+.pro-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.pro-card:hover {
+  border-color: var(--border);
+}
+
+/* Custom selection highlight */
+::selection {
+  background-color: rgba(52, 211, 153, 0.25);
+  color: var(--accent);
+}
+
+/* Fix browser autofill background glare on dark mode inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--surface) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--accent);
 }
 
 /* Accessibility: Respect user motion preferences */
