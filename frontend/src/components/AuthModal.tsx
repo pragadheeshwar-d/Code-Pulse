@@ -76,16 +76,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 overflow-y-auto touch-scroll bg-[var(--bg)] ${
+      className={`min-h-screen min-h-[100dvh] w-full bg-[var(--bg)] ${
         allowClose
-          ? 'flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md'
-          : 'flex items-center justify-center'
+          ? 'fixed inset-0 z-50 overflow-y-auto touch-scroll flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md'
+          : 'flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-x-hidden'
       }`}
     >
-      {/* Background Radial Glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[var(--accent)]/10 blur-[120px]" />
-        <div className="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-[var(--accent)]/5 blur-[100px]" />
+      {/* Subtle Ambient Background Lighting */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[var(--accent)]/[0.03] blur-[140px]" />
+        <div className="absolute bottom-10 right-1/4 w-[400px] h-[400px] rounded-full bg-[var(--accent)]/[0.02] blur-[120px]" />
       </div>
 
       {/* Main Container */}
@@ -93,7 +93,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         className={`w-full relative z-10 ${
           allowClose
             ? 'max-w-md bg-[var(--surface)] border-t sm:border border-[var(--border)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-8 shadow-2xl my-auto safe-bottom'
-            : 'max-w-6xl mx-auto px-4 py-8 lg:py-12'
+            : 'max-w-6xl mx-auto'
         }`}
       >
         {/* Close Button (if modal allows close) */}
@@ -108,81 +108,80 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
 
         {/* Layout: Split-screen Grid on Fullscreen Auth, Single Card on Floating Modal */}
-        <div className={!allowClose ? 'grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center' : 'w-full'}>
+        <div className={!allowClose ? 'grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center justify-between' : 'w-full'}>
           {/* Left Column: Hero Showcase (Visible on fullscreen Auth page) */}
           {!allowClose && (
-            <div className="lg:col-span-6 space-y-6 lg:pr-4 text-left">
-              <Logo size="lg" showVersion={true} showSubtitle={true} />
+            <div className="lg:col-span-7 space-y-6 lg:pr-6 text-left">
+              <Logo size="md" showVersion={true} showSubtitle={true} />
 
               <div className="space-y-3 pt-2">
-                <h1 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-[var(--text)] tracking-tight leading-tight">
-                  Every contest. Every streak. <span className="text-[var(--accent)]">One dashboard.</span>
+                <h1 className="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-[var(--text)] tracking-tight leading-[1.15]">
+                  Every contest. Every streak.<br />
+                  <span className="text-[var(--accent)]">One dashboard.</span>
                 </h1>
-                <p className="text-sm text-[var(--muted)] leading-relaxed max-w-lg">
+                <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed max-w-lg">
                   CodePulse pulls your solved problems, contest ratings, and daily streaks from LeetCode, Codeforces, CodeChef, and GeeksforGeeks into one dashboard.
                 </p>
               </div>
 
               {/* Feature Highlights List */}
-              <div className="space-y-3.5 pt-2 border-t border-[var(--border)]">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center shrink-0 text-[var(--accent)] mt-0.5">
+              <div className="space-y-4 pt-4 border-t border-[var(--border)] max-w-lg">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center shrink-0 text-[var(--accent)] mt-0.5 shadow-sm">
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">MULTI-PLATFORM SYNC</h3>
+                    <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider font-mono">MULTI-PLATFORM SYNC</h3>
                     <p className="text-xs text-[var(--muted)] mt-0.5">Add your handles once and see every platform side by side.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center shrink-0 text-[var(--accent)] mt-0.5">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center shrink-0 text-[var(--accent)] mt-0.5 shadow-sm">
                     <Activity className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">52-WEEK ACTIVITY HEATMAP</h3>
+                    <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider font-mono">52-WEEK ACTIVITY HEATMAP</h3>
                     <p className="text-xs text-[var(--muted)] mt-0.5">Spot your solving patterns and keep your daily streak alive.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center shrink-0 text-[var(--accent)] mt-0.5">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center shrink-0 text-[var(--accent)] mt-0.5 shadow-sm">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">GOALS & MILESTONES</h3>
+                    <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider font-mono">GOALS & MILESTONES</h3>
                     <p className="text-xs text-[var(--muted)] mt-0.5">Set targets like 500 solved or a 1800 rating and track real progress.</p>
                   </div>
                 </div>
               </div>
 
-              {/* Platform SVG Badges */}
-              <div className="pt-4 flex items-center gap-3">
-                <span className="text-[11px] font-mono font-medium text-[var(--accent)] uppercase">Supported:</span>
-                <div className="flex items-center gap-2">
-                  <div className="px-2.5 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center gap-1.5 text-xs text-[var(--text)]">
-                    <PlatformIcon platform="leetcode" className="w-4 h-4" />
-                    <span className="text-[11px] font-semibold">LeetCode</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center gap-1.5 text-xs text-[var(--text)]">
-                    <PlatformIcon platform="codeforces" className="w-4 h-4" />
-                    <span className="text-[11px] font-semibold">Codeforces</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center gap-1.5 text-xs text-[var(--text)]">
-                    <PlatformIcon platform="codechef" className="w-4 h-4" />
-                    <span className="text-[11px] font-semibold">CodeChef</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center gap-1.5 text-xs text-[var(--text)]">
-                    <PlatformIcon platform="geeksforgeeks" className="w-4 h-4" />
-                    <span className="text-[11px] font-semibold">GFG</span>
-                  </div>
+              {/* Platform Badges */}
+              <div className="pt-4 flex flex-wrap items-center gap-2.5">
+                <span className="text-[11px] font-mono font-medium text-[var(--accent)] uppercase mr-1">SUPPORTED:</span>
+                <div className="px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center gap-2 text-xs text-[var(--text)] shadow-xs">
+                  <PlatformIcon platform="leetcode" className="w-4 h-4" />
+                  <span className="text-xs font-semibold">LeetCode</span>
+                </div>
+                <div className="px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center gap-2 text-xs text-[var(--text)] shadow-xs">
+                  <PlatformIcon platform="codeforces" className="w-4 h-4" />
+                  <span className="text-xs font-semibold">Codeforces</span>
+                </div>
+                <div className="px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center gap-2 text-xs text-[var(--text)] shadow-xs">
+                  <PlatformIcon platform="codechef" className="w-4 h-4" />
+                  <span className="text-xs font-semibold">CodeChef</span>
+                </div>
+                <div className="px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center gap-2 text-xs text-[var(--text)] shadow-xs">
+                  <PlatformIcon platform="geeksforgeeks" className="w-4 h-4" />
+                  <span className="text-xs font-semibold">GFG</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Right Column / Form Container */}
-          <div className={!allowClose ? 'lg:col-span-6 w-full max-w-md mx-auto' : 'w-full'}>
+          <div className={!allowClose ? 'lg:col-span-5 w-full max-w-[440px] mx-auto' : 'w-full'}>
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 sm:p-8 shadow-2xl relative">
               {/* Header inside Form Card (Shown on mobile or dialog) */}
               <div className="text-center mb-6">
