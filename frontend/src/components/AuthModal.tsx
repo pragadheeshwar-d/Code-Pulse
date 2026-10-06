@@ -4,6 +4,7 @@ import { api, setAuthToken } from '../services/api';
 import { UserProfile } from '../types';
 import { Logo } from './Logo';
 import { PlatformIcon } from './PlatformIcon';
+import { AnimatedAuthBackground } from './AnimatedAuthBackground';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -82,11 +83,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           : 'flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-x-hidden'
       }`}
     >
-      {/* Subtle Ambient Background Lighting */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[var(--accent)]/[0.03] blur-[140px]" />
-        <div className="absolute bottom-10 right-1/4 w-[400px] h-[400px] rounded-full bg-[var(--accent)]/[0.02] blur-[120px]" />
-      </div>
+      {/* Animated Matrix/Neural Background Canvas */}
+      <AnimatedAuthBackground />
 
       {/* Main Container */}
       <div
