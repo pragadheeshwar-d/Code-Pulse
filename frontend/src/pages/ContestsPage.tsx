@@ -93,6 +93,9 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
   const [selectedContest, setSelectedContest] = useState<ContestRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Contest History Collapsible State (hidden by default, shown on demand)
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState<boolean>(false);
+
   // Helper date formatter
   const formatDate = (dateStr: string, includeYear: boolean = true) => {
     try {
@@ -1233,197 +1236,241 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
         </div>
       )}
 
-      {/* 6. Contest History Table */}
-      <div className="space-y-3">
-        {/* Table Toolbar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-[var(--text)] tracking-tight font-sans">
-              Contest History
-            </h3>
-            <span className="text-xs font-mono text-[var(--muted)] px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)]">
-              {tableContests.length} of {contests.length}
-            </span>
+      {/* 6. Contest History Section (Hidden by default, shown on demand when clicked) */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden transition-all shadow-sm">
+        {/* Toggle Header Button */}
+        <button
+          type="button"
+          onClick={() => setIsHistoryExpanded(prev => !prev)}
+          className="w-full p-4 sm:p-4.5 flex items-center justify-between text-left hover:bg-[var(--surface-hover)] transition-colors group cursor-pointer"
+          aria-expanded={isHistoryExpanded}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center shrink-0 group-hover:border-[var(--accent)]/50 transition-colors">
+              <Layers className="w-4 h-4 text-[var(--accent)]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-[var(--text)] tracking-tight font-sans">
+                  Contest History
+                </h3>
+                <span className="text-xs font-mono text-[var(--muted)] px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)]">
+                  {contests.length} logs
+                </span>
+              </div>
+              <p className="text-xs text-[var(--muted)] mt-0.5">
+                {isHistoryExpanded
+                  ? 'Click to collapse contest history log table.'
+                  : 'Click to expand detailed contest records, standings, and delta history.'}
+              </p>
+            </div>
           </div>
 
-          {/* Filters & Search Controls */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Search */}
-            <div className="relative min-w-[180px] sm:min-w-[220px]">
-              <Search className="w-3.5 h-3.5 text-[var(--muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search contests..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] placeholder-[var(--muted)]/60 focus:outline-none focus:border-[var(--accent)] transition-colors"
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-mono font-medium text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors hidden sm:inline">
+              {isHistoryExpanded ? 'Collapse Table' : 'Show Contest History'}
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center shrink-0 group-hover:border-[var(--accent)]/40 transition-colors">
+              <ChevronDown
+                className={`w-4 h-4 text-[var(--muted)] group-hover:text-[var(--text)] transition-transform duration-200 ${
+                  isHistoryExpanded ? 'rotate-180' : ''
+                }`}
               />
             </div>
-
-            {/* Delta Filter */}
-            <select
-              value={tableDeltaFilter}
-              onChange={e => setTableDeltaFilter(e.target.value as any)}
-              aria-label="Filter by rating delta"
-              className="px-2.5 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] font-medium transition-colors"
-            >
-              <option value="all">All Deltas</option>
-              <option value="positive">Rating Gain (+)</option>
-              <option value="negative">Rating Loss (-)</option>
-            </select>
-
-            {/* Sort Dropdown */}
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as SortOption)}
-              aria-label="Sort contests"
-              className="px-2.5 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] font-medium transition-colors"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="best_rank">Best Rank</option>
-              <option value="largest_gain">Largest Gain</option>
-              <option value="largest_loss">Largest Loss</option>
-            </select>
           </div>
-        </div>
+        </button>
 
-        {/* Table Content */}
-        {tableContests.length > 0 ? (
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden shadow-sm">
-            <div className="overflow-x-auto touch-scroll">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-[var(--border)] bg-[var(--bg)]/60 text-[var(--muted)] font-mono text-[11px] uppercase tracking-wider">
-                    <th className="py-2.5 px-3.5 font-normal">Platform</th>
-                    <th className="py-2.5 px-3.5 font-normal">Contest Name</th>
-                    <th className="py-2.5 px-3.5 font-normal">Date</th>
-                    <th className="py-2.5 px-3.5 font-normal">Rank</th>
-                    <th className="py-2.5 px-3.5 font-normal">Old Rating</th>
-                    <th className="py-2.5 px-3.5 font-normal">New Rating</th>
-                    <th className="py-2.5 px-3.5 font-normal">Delta</th>
-                    <th className="py-2.5 px-3.5 text-right font-normal">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border-subtle)] font-sans">
-                  {tableContests.map((c, idx) => {
-                    const change = c.rating_change;
-                    const isPositive = typeof change === 'number' && change > 0;
-                    const isNegative = typeof change === 'number' && change < 0;
-                    const cfg = PLATFORM_CONFIG[c.platform?.toLowerCase()] || {
-                      name: c.platform,
-                      stroke: 'var(--text)'
-                    };
+        {/* Expandable Table Content */}
+        {isHistoryExpanded && (
+          <div className="p-4 pt-3 border-t border-[var(--border)] space-y-3 animate-fade-in">
+            {/* Table Toolbar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-[var(--muted)]">
+                  Showing {tableContests.length} of {contests.length} recorded contests
+                </span>
+              </div>
 
-                    return (
-                      <tr
-                        key={`${c.platform}-${c.external_contest_id || idx}`}
-                        onClick={() => handleRowClick(c)}
-                        className="hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group"
-                      >
-                        <td className="py-3 px-3.5 font-mono capitalize font-medium text-[var(--text)]">
-                          <div className="flex items-center gap-2">
-                            <PlatformIcon platform={c.platform} className="w-4 h-4 shrink-0" />
-                            <span>{cfg.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3.5 font-medium text-[var(--text)] max-w-xs truncate">
-                          <span className="group-hover:text-[var(--accent)] transition-colors">
-                            {c.name}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3.5 font-mono text-[11px] text-[var(--muted)] whitespace-nowrap">
-                          {formatDate(c.contest_date)}
-                        </td>
-                        <td className="py-3 px-3.5 font-mono font-medium text-[var(--text)]">
-                          {c.rank !== null && c.rank !== undefined ? `#${c.rank}` : '—'}
-                        </td>
-                        <td className="py-3 px-3.5 font-mono text-[var(--muted)]">
-                          {c.rating_before !== null && c.rating_before !== undefined ? c.rating_before : '—'}
-                        </td>
-                        <td className="py-3 px-3.5 font-mono font-semibold text-[var(--text)]">
-                          {c.rating_after !== null && c.rating_after !== undefined ? c.rating_after : '—'}
-                        </td>
-                        <td className="py-3 px-3.5 font-mono font-semibold whitespace-nowrap">
-                          {change !== null && change !== undefined ? (
-                            <span
-                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] ${
-                                isPositive
-                                  ? 'text-[var(--accent)] bg-[var(--accent)]/10'
-                                  : isNegative
-                                  ? 'text-[var(--danger)] bg-[var(--danger)]/10'
-                                  : 'text-[var(--muted)] bg-[var(--bg)]'
-                              }`}
-                            >
-                              {isPositive && <ArrowUpRight className="w-3 h-3" />}
-                              {isNegative && <ArrowDownRight className="w-3 h-3" />}
-                              {!isPositive && !isNegative && <Minus className="w-3 h-3" />}
-                              <span>{isPositive ? `+${change}` : change}</span>
-                            </span>
-                          ) : (
-                            <span className="text-[var(--muted)]">—</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-3.5 text-right whitespace-nowrap">
-                          <div className="inline-flex items-center gap-1.5">
-                            {c.url && (
-                              <a
-                                href={c.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={e => e.stopPropagation()}
-                                className="p-1.5 rounded-md text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--bg)] transition-colors"
-                                title="Open official standings"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
-                            )}
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleRowClick(c);
-                              }}
-                              className="px-2 py-1 rounded text-[11px] font-mono text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
-                            >
-                              Details
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {/* Filters & Search Controls */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Search */}
+                <div className="relative min-w-[180px] sm:min-w-[220px]">
+                  <Search className="w-3.5 h-3.5 text-[var(--muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search contests..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] placeholder-[var(--muted)]/60 focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  />
+                </div>
+
+                {/* Delta Filter */}
+                <select
+                  value={tableDeltaFilter}
+                  onChange={e => setTableDeltaFilter(e.target.value as any)}
+                  aria-label="Filter by rating delta"
+                  className="px-2.5 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] font-medium transition-colors"
+                >
+                  <option value="all">All Deltas</option>
+                  <option value="positive">Rating Gain (+)</option>
+                  <option value="negative">Rating Loss (-)</option>
+                </select>
+
+                {/* Sort Dropdown */}
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value as SortOption)}
+                  aria-label="Sort contests"
+                  className="px-2.5 py-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] font-medium transition-colors"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="best_rank">Best Rank</option>
+                  <option value="largest_gain">Largest Gain</option>
+                  <option value="largest_loss">Largest Loss</option>
+                </select>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="p-8 text-center rounded-xl bg-[var(--surface)] border border-[var(--border)] space-y-2">
-            <Trophy className="w-8 h-8 text-[var(--muted)] mx-auto opacity-40 mb-2" />
-            <p className="text-sm font-medium text-[var(--text)]">No contests found</p>
-            <p className="text-xs text-[var(--muted)] max-w-sm mx-auto">
-              {contests.length === 0
-                ? 'Connect your Codeforces, LeetCode, or CodeChef account to import verified contest rating history.'
-                : 'No contests matched your search or filter criteria.'}
-            </p>
-            {contests.length === 0 ? (
-              <button
-                onClick={onConnectClick}
-                className="mt-2 px-3.5 py-1.5 rounded-lg bg-[var(--primary)] text-[var(--on-primary)] text-xs font-semibold hover:opacity-90 transition-opacity"
-              >
-                Connect platform
-              </button>
+
+            {/* Table Content */}
+            {tableContests.length > 0 ? (
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/40 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto touch-scroll">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-[var(--border)] bg-[var(--bg)]/80 text-[var(--muted)] font-mono text-[11px] uppercase tracking-wider">
+                        <th className="py-2.5 px-3.5 font-normal">Platform</th>
+                        <th className="py-2.5 px-3.5 font-normal">Contest Name</th>
+                        <th className="py-2.5 px-3.5 font-normal">Date</th>
+                        <th className="py-2.5 px-3.5 font-normal">Rank</th>
+                        <th className="py-2.5 px-3.5 font-normal">Old Rating</th>
+                        <th className="py-2.5 px-3.5 font-normal">New Rating</th>
+                        <th className="py-2.5 px-3.5 font-normal">Delta</th>
+                        <th className="py-2.5 px-3.5 text-right font-normal">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border-subtle)] font-sans">
+                      {tableContests.map((c, idx) => {
+                        const change = c.rating_change;
+                        const isPositive = typeof change === 'number' && change > 0;
+                        const isNegative = typeof change === 'number' && change < 0;
+                        const cfg = PLATFORM_CONFIG[c.platform?.toLowerCase()] || {
+                          name: c.platform,
+                          stroke: 'var(--text)'
+                        };
+
+                        return (
+                          <tr
+                            key={`${c.platform}-${c.external_contest_id || idx}`}
+                            onClick={() => handleRowClick(c)}
+                            className="hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group"
+                          >
+                            <td className="py-3 px-3.5 font-mono capitalize font-medium text-[var(--text)]">
+                              <div className="flex items-center gap-2">
+                                <PlatformIcon platform={c.platform} className="w-4 h-4 shrink-0" />
+                                <span>{cfg.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3.5 font-medium text-[var(--text)] max-w-xs truncate">
+                              <span className="group-hover:text-[var(--accent)] transition-colors">
+                                {c.name}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3.5 font-mono text-[11px] text-[var(--muted)] whitespace-nowrap">
+                              {formatDate(c.contest_date)}
+                            </td>
+                            <td className="py-3 px-3.5 font-mono font-medium text-[var(--text)]">
+                              {c.rank !== null && c.rank !== undefined ? `#${c.rank}` : '—'}
+                            </td>
+                            <td className="py-3 px-3.5 font-mono text-[var(--muted)]">
+                              {c.rating_before !== null && c.rating_before !== undefined ? c.rating_before : '—'}
+                            </td>
+                            <td className="py-3 px-3.5 font-mono font-semibold text-[var(--text)]">
+                              {c.rating_after !== null && c.rating_after !== undefined ? c.rating_after : '—'}
+                            </td>
+                            <td className="py-3 px-3.5 font-mono font-semibold whitespace-nowrap">
+                              {change !== null && change !== undefined ? (
+                                <span
+                                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] ${
+                                    isPositive
+                                      ? 'text-[var(--accent)] bg-[var(--accent)]/10'
+                                      : isNegative
+                                      ? 'text-[var(--danger)] bg-[var(--danger)]/10'
+                                      : 'text-[var(--muted)] bg-[var(--bg)]'
+                                  }`}
+                                >
+                                  {isPositive && <ArrowUpRight className="w-3 h-3" />}
+                                  {isNegative && <ArrowDownRight className="w-3 h-3" />}
+                                  {!isPositive && !isNegative && <Minus className="w-3 h-3" />}
+                                  <span>{isPositive ? `+${change}` : change}</span>
+                                </span>
+                              ) : (
+                                <span className="text-[var(--muted)]">—</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-3.5 text-right whitespace-nowrap">
+                              <div className="inline-flex items-center gap-1.5">
+                                {c.url && (
+                                  <a
+                                    href={c.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={e => e.stopPropagation()}
+                                    className="p-1.5 rounded-md text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--bg)] transition-colors"
+                                    title="Open official standings"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    handleRowClick(c);
+                                  }}
+                                  className="px-2 py-1 rounded text-[11px] font-mono text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
+                                >
+                                  Details
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             ) : (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setTableDeltaFilter('all');
-                  setPlatformFilter('all');
-                }}
-                className="mt-2 text-xs font-mono text-[var(--accent)] hover:underline"
-              >
-                Clear all filters
-              </button>
+              <div className="p-8 text-center rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-2">
+                <Trophy className="w-8 h-8 text-[var(--muted)] mx-auto opacity-40 mb-2" />
+                <p className="text-sm font-medium text-[var(--text)]">No contests found</p>
+                <p className="text-xs text-[var(--muted)] max-w-sm mx-auto">
+                  {contests.length === 0
+                    ? 'Connect your Codeforces, LeetCode, or CodeChef account to import verified contest rating history.'
+                    : 'No contests matched your search or filter criteria.'}
+                </p>
+                {contests.length === 0 ? (
+                  <button
+                    onClick={onConnectClick}
+                    className="mt-2 px-3.5 py-1.5 rounded-lg bg-[var(--primary)] text-[var(--on-primary)] text-xs font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    Connect platform
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setTableDeltaFilter('all');
+                      setPlatformFilter('all');
+                    }}
+                    className="mt-2 text-xs font-mono text-[var(--accent)] hover:underline"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
