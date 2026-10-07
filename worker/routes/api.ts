@@ -89,26 +89,41 @@ app.post('/platforms/connect', async (c) => {
 });
 
 app.delete('/platforms/:platform', async (c) => {
-  const userId = c.get('userId');
-  const platform = c.req.param('platform');
-  const platformService = new PlatformService(c.env.DB);
-  await platformService.disconnectPlatform(userId, platform);
-  return c.json({ success: true, data: { message: 'Disconnected successfully' } });
+  try {
+    const userId = c.get('userId');
+    const platform = c.req.param('platform');
+    const platformService = new PlatformService(c.env.DB);
+    await platformService.disconnectPlatform(userId, platform);
+    return c.json({ success: true, data: { message: 'Disconnected successfully' } });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message || 'Failed to disconnect platform' }, 400);
+  }
 });
 
 app.post('/sync', async (c) => {
-  const userId = c.get('userId');
-  const syncService = new SyncService(c.env.DB);
-  const data = await syncService.syncAll(userId);
-  return c.json({ success: true, data });
+  try {
+    const userId = c.get('userId');
+    const syncService = new SyncService(c.env.DB);
+    const data = await syncService.syncAll(userId);
+    return c.json({ success: true, data });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message || 'Failed to sync' }, 400);
+  }
 });
 
 app.post('/sync/:platform', async (c) => {
-  const userId = c.get('userId');
-  const platform = c.req.param('platform');
-  const syncService = new SyncService(c.env.DB);
-  const data = await syncService.syncPlatform(userId, platform);
-  return c.json({ success: true, data });
+  try {
+    const userId = c.get('userId');
+    const platform = c.req.param('platform');
+    const syncService = new SyncService(c.env.DB);
+    const data = await syncService.syncPlatform(userId, platform);
+    if (!data.success) {
+      return c.json({ success: false, error: data.error || 'Failed to sync platform' }, 400);
+    }
+    return c.json({ success: true, data });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message || 'Failed to sync platform' }, 400);
+  }
 });
 
 app.get('/stats', async (c) => {

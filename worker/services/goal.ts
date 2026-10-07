@@ -59,13 +59,15 @@ export class GoalService {
         let platformCond = '';
         const params: any[] = [userId, goal.start_date, goal.end_date];
         if (goal.platform) {
-          platformCond = 'AND platform = ?';
+          platformCond = 'AND c.platform = ?';
           params.push(goal.platform);
         }
 
         const { results } = await this.db.prepare(`
-          SELECT COUNT(*) as count FROM contests
-          WHERE user_id = ? AND contest_date >= ? AND contest_date <= ? ${platformCond}
+          SELECT COUNT(DISTINCT cr.contest_id) as count
+          FROM contest_results cr
+          JOIN contests c ON cr.contest_id = c.id
+          WHERE cr.user_id = ? AND c.contest_date >= ? AND c.contest_date <= ? ${platformCond}
         `).bind(...params).all<{ count: number }>();
 
         current = results[0]?.count || 0;

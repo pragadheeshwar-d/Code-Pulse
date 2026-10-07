@@ -22,6 +22,12 @@ export const PlatformDetailModal: React.FC<PlatformDetailModalProps> = ({
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setError(null);
+    }
+  }, [isOpen, platformData?.platform]);
+
   if (!isOpen || !platformData) return null;
 
   const handleSync = async () => {

@@ -145,11 +145,12 @@ export class PlatformService {
     }
 
     await this.db.batch([
-      this.db.prepare(`DELETE FROM stat_snapshots WHERE platform_account_id = ?`).bind(account.id),
-      this.db.prepare(`DELETE FROM problems WHERE user_id = ? AND platform = ?`).bind(userId, platform),
+      this.db.prepare(`DELETE FROM stat_snapshots WHERE platform_account_id = ? OR (user_id = ? AND platform = ?)`).bind(account.id, userId, platform),
+      this.db.prepare(`DELETE FROM user_problems WHERE user_id = ? AND problem_id IN (SELECT id FROM problems WHERE platform = ?)`).bind(userId, platform),
       this.db.prepare(`DELETE FROM activity_records WHERE user_id = ? AND platform = ?`).bind(userId, platform),
-      this.db.prepare(`DELETE FROM contests WHERE user_id = ? AND platform = ?`).bind(userId, platform),
+      this.db.prepare(`DELETE FROM contest_results WHERE user_id = ? AND contest_id IN (SELECT id FROM contests WHERE platform = ?)`).bind(userId, platform),
       this.db.prepare(`DELETE FROM platform_topics WHERE user_id = ? AND platform = ?`).bind(userId, platform),
+      this.db.prepare(`DELETE FROM sync_logs WHERE user_id = ? AND platform = ?`).bind(userId, platform),
       this.db.prepare(`DELETE FROM platform_accounts WHERE id = ?`).bind(account.id)
     ]);
 
