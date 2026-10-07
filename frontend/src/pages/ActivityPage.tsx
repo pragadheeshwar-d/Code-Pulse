@@ -20,7 +20,7 @@ export const ActivityPage: React.FC<ActivityPageProps> = ({
   recentProblems = []
 }) => {
   const activeDaysList = activityData.filter(d => d.count > 0).sort((a, b) => b.date.localeCompare(a.date));
-  const [selectedDate, setSelectedDate] = useState<string | null>(activeDaysList[0]?.date || null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const selectedDayData = activityData.find(d => d.date === selectedDate) || null;
 
@@ -94,7 +94,7 @@ export const ActivityPage: React.FC<ActivityPageProps> = ({
         selectedPlatform={selectedPlatform}
         onSelectPlatform={onSelectPlatform}
         selectedDay={selectedDate}
-        onSelectDay={d => setSelectedDate(d)}
+        onSelectDay={d => setSelectedDate(prev => prev === d ? null : d)}
       />
 
       {/* 4. Selected Day Detail View (Phase 10 requirement) */}
@@ -173,7 +173,7 @@ export const ActivityPage: React.FC<ActivityPageProps> = ({
             {activeDaysList.map((day, idx) => (
               <button
                 key={idx}
-                onClick={() => setSelectedDate(day.date)}
+                onClick={() => setSelectedDate(prev => prev === day.date ? null : day.date)}
                 className={`w-full py-2.5 px-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-left rounded-md transition-colors ${
                   selectedDate === day.date
                     ? 'bg-[var(--surface-hover)] border border-[var(--border)]'

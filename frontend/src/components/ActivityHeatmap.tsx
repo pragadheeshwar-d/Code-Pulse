@@ -97,24 +97,24 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     let colorStyle = '';
     switch (level) {
       case 1:
-        colorStyle = 'bg-[var(--heatmap-1)] border-[#0E4429]';
+        colorStyle = 'bg-[#0E4429] border-[#165634]';
         break;
       case 2:
-        colorStyle = 'bg-[var(--heatmap-2)] border-[#006D32]';
+        colorStyle = 'bg-[#006D32] border-[#1C823D]';
         break;
       case 3:
-        colorStyle = 'bg-[var(--heatmap-3)] border-[#26A641]';
+        colorStyle = 'bg-[#26A641] border-[#34D399]';
         break;
       case 4:
-        colorStyle = 'bg-[var(--heatmap-4)] border-[#39D353] shadow-[0_0_8px_rgba(57,211,83,0.5)]';
+        colorStyle = 'bg-[#34D399] border-[#6EE7B7] shadow-[0_0_6px_rgba(52,211,153,0.35)]';
         break;
       default:
-        colorStyle = 'bg-[var(--heatmap-0)] border-[var(--border)] hover:border-[var(--accent)]/80';
+        colorStyle = 'bg-[var(--heatmap-0)] border-[var(--border)]';
         break;
     }
 
     if (isToday) {
-      return `${colorStyle} ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--surface)] z-10`;
+      return `${colorStyle} ring-1 ring-[var(--accent)]/70 z-10`;
     }
     return colorStyle;
   };
@@ -229,7 +229,11 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                         className={`w-[11px] h-[11px] rounded-[2px] border ${getColorClass(
                           level,
                           isToday
-                        )} ${isSelected ? 'ring-2 ring-[var(--primary)] ring-offset-1 ring-offset-[var(--surface)] z-20 scale-125' : ''} transition-transform hover:scale-125 cursor-pointer`}
+                        )} ${
+                          isSelected
+                            ? 'border-[var(--accent)] ring-1 ring-[var(--accent)] shadow-[0_0_8px_rgba(52,211,153,0.35)] z-20'
+                            : 'hover:border-[var(--accent)]/80 hover:brightness-125'
+                        } transition-colors cursor-pointer`}
                       />
                     );
                   })}
@@ -250,11 +254,11 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
         <div className="flex items-center gap-2 self-end 2xs:self-auto ml-auto">
           <span className="text-[10px] text-[var(--muted)] font-mono">Less</span>
           <div className="flex gap-1 items-center">
-            <div title="No activity" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-0)] border border-[var(--border)]" />
-            <div title="1-2 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-1)] border border-[#0E4429]" />
-            <div title="3-5 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-2)] border border-[#006D32]" />
-            <div title="6-9 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-3)] border border-[#26A641]" />
-            <div title="10+ solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[var(--heatmap-4)] border border-[#39D353]" />
+            <div title="No activity" className="w-2.5 h-2.5 rounded-[2px] bg-[#161619] border border-[#222429]" />
+            <div title="1-2 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[#0E4429] border border-[#165634]" />
+            <div title="3-5 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[#006D32] border border-[#1C823D]" />
+            <div title="6-9 solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[#26A641] border border-[#34D399]" />
+            <div title="10+ solved/subs" className="w-2.5 h-2.5 rounded-[2px] bg-[#34D399] border border-[#6EE7B7]" />
           </div>
           <span className="text-[10px] text-[var(--muted)] font-mono">More</span>
         </div>
