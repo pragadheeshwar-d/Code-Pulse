@@ -41,6 +41,44 @@ interface ContestsPageProps {
 type TimeRange = '7D' | '30D' | '3M' | '6M' | '1Y' | 'ALL';
 type SortOption = 'newest' | 'oldest' | 'best_rank' | 'largest_gain' | 'largest_loss';
 
+export const PLATFORM_CONFIG: Record<
+  string,
+  { name: string; stroke: string; fill: string; bg: string; text: string; border: string }
+> = {
+  leetcode: {
+    name: 'LeetCode',
+    stroke: '#FFA116',
+    fill: 'rgba(255, 161, 22, 0.25)',
+    bg: 'rgba(255, 161, 22, 0.1)',
+    text: '#FFA116',
+    border: 'rgba(255, 161, 22, 0.3)'
+  },
+  codeforces: {
+    name: 'Codeforces',
+    stroke: '#38BDF8',
+    fill: 'rgba(56, 189, 248, 0.25)',
+    bg: 'rgba(56, 189, 248, 0.1)',
+    text: '#38BDF8',
+    border: 'rgba(56, 189, 248, 0.3)'
+  },
+  codechef: {
+    name: 'CodeChef',
+    stroke: '#34D399',
+    fill: 'rgba(52, 211, 153, 0.25)',
+    bg: 'rgba(52, 211, 153, 0.1)',
+    text: '#34D399',
+    border: 'rgba(52, 211, 153, 0.3)'
+  },
+  geeksforgeeks: {
+    name: 'GeeksforGeeks',
+    stroke: '#22C55E',
+    fill: 'rgba(34, 197, 94, 0.25)',
+    bg: 'rgba(34, 197, 94, 0.1)',
+    text: '#22C55E',
+    border: 'rgba(34, 197, 94, 0.3)'
+  }
+};
+
 export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectClick }) => {
   // Global & Graph Filters
   const [selectedRange, setSelectedRange] = useState<TimeRange>('ALL');
@@ -70,9 +108,52 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
     }
   };
 
-  // 1. KPI Metrics calculations across all contests
+  // Distinct platforms available across all contests
+  const availablePlatforms = useMemo(() => {
+    const set = new Set<string>();
+    contests.forEach(c => {
+      if (c.platform) set.add(c.platform.toLowerCase());
+    });
+    return Array.from(set);
+  }, [contests]);
+
+  // Latest rating per platform
+  const latestRatingByPlatform = useMemo(() => {
+    const map: Record<string, number> = {};
+    const sorted = [...contests].sort(
+      (a, b) => new Date(a.contest_date).getTime() - new Date(b.contest_date).getTime()
+    );
+    sorted.forEach(c => {
+      const p = c.platform.toLowerCase();
+      const r = typeof c.rating_after === 'number' && c.rating_after > 0 ? c.rating_after : null;
+      if (r !== null) map[p] = r;
+    });
+    return map;
+  }, [contests]);
+
+  // Is multi-platform mode currently active on the chart?
+  const isMultiPlatform = platformFilter === 'all' && availablePlatforms.length > 1;
+
+  // Single platform active config (if not multi-platform)
+  const singlePlatformKey = platformFilter !== 'all'
+    ? platformFilter.toLowerCase()
+    : availablePlatforms[0] || 'leetcode';
+  const singlePlatformConfig = PLATFORM_CONFIG[singlePlatformKey] || {
+    name: singlePlatformKey,
+    stroke: 'var(--accent)',
+    fill: 'rgba(52, 211, 153, 0.25)',
+    bg: 'rgba(52, 211, 153, 0.1)',
+    text: 'var(--accent)',
+    border: 'rgba(52, 211, 153, 0.3)'
+  };
+
+  // 1. KPI Metrics calculations (respects active platform filter)
   const kpiMetrics = useMemo(() => {
-    if (!contests || contests.length === 0) {
+    const list = platformFilter === 'all'
+      ? contests
+      : contests.filter(c => c.platform.toLowerCase() === platformFilter.toLowerCase());
+
+    if (!list || list.length === 0) {
       return {
         total: 0,
         bestRank: null as number | null,
@@ -97,7 +178,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
     let positiveCount = 0;
     let maxGain: { delta: number; contest: string } | null = null;
 
-    contests.forEach(c => {
+    list.forEach(c => {
       // Best rank
       if (typeof c.rank === 'number' && c.rank > 0) {
         if (minRank === null || c.rank < minRank) {
@@ -133,7 +214,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
     const positiveRate = ratedCount > 0 ? Math.round((positiveCount / ratedCount) * 100) : null;
 
     // Chronological sort for recent trajectory (last 5 rated contests)
-    const sortedChronological = [...contests]
+    const sortedChronological = [...list]
       .filter(c => typeof c.rating_change === 'number')
       .sort((a, b) => new Date(a.contest_date).getTime() - new Date(b.contest_date).getTime());
 
@@ -145,7 +226,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
     }
 
     return {
-      total: contests.length,
+      total: list.length,
       bestRank: minRank,
       bestRankContest: minRankContest,
       highestRating: maxRating,
@@ -156,13 +237,13 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
       positiveDeltaRate: positiveRate,
       recentTrajectory
     };
-  }, [contests]);
+  }, [contests, platformFilter]);
 
-  // 2. Chronological dataset for Charts (filtered by range & platform)
-  const chartData = useMemo(() => {
+  // 2. Base Chronological dataset filtered by Range and Platform
+  const baseTimeline = useMemo(() => {
     if (!contests || contests.length === 0) return [];
 
-    // Filter by platform
+    // Filter by platform if not 'all'
     let list = contests.filter(c => {
       if (platformFilter === 'all') return true;
       return c.platform.toLowerCase() === platformFilter.toLowerCase();
@@ -188,8 +269,8 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
       list = list.filter(c => new Date(c.contest_date).getTime() >= cutoff.getTime());
     }
 
-    // Format for Recharts
     return list.map(c => {
+      const p = c.platform.toLowerCase();
       const rating = typeof c.rating_after === 'number' && c.rating_after > 0
         ? c.rating_after
         : typeof c.rating_before === 'number' && typeof c.rating_change === 'number'
@@ -199,6 +280,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
       return {
         ...c,
         rating,
+        platformKey: p,
         dateFormatted: formatDate(c.contest_date, false),
         fullDateFormatted: formatDate(c.contest_date, true),
         delta: typeof c.rating_change === 'number' ? c.rating_change : 0
@@ -206,22 +288,85 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
     });
   }, [contests, platformFilter, selectedRange]);
 
-  // Contests with valid ratings for the main rating line
+  // 3. Rating Performance Chart Data:
+  // When multi-platform is active, group by date so each platform has its own independent line!
+  // Platforms are NEVER connected to each other!
   const ratingChartData = useMemo(() => {
-    return chartData.filter(d => typeof d.rating === 'number' && d.rating > 0);
-  }, [chartData]);
+    if (!baseTimeline || baseTimeline.length === 0) return [];
 
-  // Contests with valid ranks for the rank progression chart
+    if (!isMultiPlatform) {
+      // Single Platform Mode: simple array of contests with valid ratings
+      return baseTimeline.filter(d => typeof d.rating === 'number' && d.rating > 0);
+    }
+
+    // Multi-Platform Mode: group by date
+    const dateMap = new Map<string, any>();
+
+    baseTimeline.forEach(item => {
+      if (typeof item.rating !== 'number' || item.rating <= 0) return;
+      const p = item.platformKey;
+      const dateKey = item.contest_date?.split('T')[0] || item.contest_date;
+
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, {
+          date: dateKey,
+          dateFormatted: item.dateFormatted,
+          fullDateFormatted: item.fullDateFormatted,
+          contests: []
+        });
+      }
+
+      const point = dateMap.get(dateKey);
+      point[p] = item.rating;
+      point[`${p}_rank`] = item.rank;
+      point[`${p}_delta`] = item.rating_change;
+      point.contests.push(item);
+    });
+
+    return Array.from(dateMap.values()).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [baseTimeline, isMultiPlatform]);
+
+  // 4. Rank Chart Data: isolated per platform in multi-mode
   const rankChartData = useMemo(() => {
-    return chartData.filter(d => typeof d.rank === 'number' && d.rank > 0);
-  }, [chartData]);
+    if (!baseTimeline || baseTimeline.length === 0) return [];
 
-  // Contests with rating change for the delta chart
+    if (!isMultiPlatform) {
+      return baseTimeline.filter(d => typeof d.rank === 'number' && d.rank > 0);
+    }
+
+    const dateMap = new Map<string, any>();
+    baseTimeline.forEach(item => {
+      if (typeof item.rank !== 'number' || item.rank <= 0) return;
+      const p = item.platformKey;
+      const dateKey = item.contest_date?.split('T')[0] || item.contest_date;
+
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, {
+          date: dateKey,
+          dateFormatted: item.dateFormatted,
+          fullDateFormatted: item.fullDateFormatted,
+          contests: []
+        });
+      }
+
+      const point = dateMap.get(dateKey);
+      point[`${p}_rank`] = item.rank;
+      point.contests.push(item);
+    });
+
+    return Array.from(dateMap.values()).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [baseTimeline, isMultiPlatform]);
+
+  // 5. Delta Chart Data (per contest)
   const deltaChartData = useMemo(() => {
-    return chartData.filter(d => typeof d.rating_change === 'number');
-  }, [chartData]);
+    return baseTimeline.filter(d => typeof d.rating_change === 'number');
+  }, [baseTimeline]);
 
-  // 3. Filtered & Sorted Contests for History Table
+  // 6. Filtered & Sorted Contests for History Table
   const tableContests = useMemo(() => {
     let result = [...contests];
 
@@ -313,9 +458,11 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
               className="px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)] font-medium transition-colors"
             >
               <option value="all">All Platforms</option>
-              <option value="codeforces">Codeforces</option>
-              <option value="leetcode">LeetCode</option>
-              <option value="codechef">CodeChef</option>
+              {availablePlatforms.map(p => (
+                <option key={p} value={p}>
+                  {PLATFORM_CONFIG[p]?.name || p}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -335,7 +482,9 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
             {kpiMetrics.total}
           </p>
           <p className="text-[11px] text-[var(--muted)] mt-1 truncate">
-            {platformFilter === 'all' ? 'Across all rated platforms' : `Verified on ${platformFilter}`}
+            {platformFilter === 'all'
+              ? `${availablePlatforms.length} platform${availablePlatforms.length === 1 ? '' : 's'} linked`
+              : `Verified on ${PLATFORM_CONFIG[platformFilter]?.name || platformFilter}`}
           </p>
         </div>
 
@@ -367,7 +516,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
             {kpiMetrics.highestRating !== null ? kpiMetrics.highestRating : '—'}
           </p>
           <p className="text-[11px] text-[var(--muted)] mt-1 truncate">
-            Personal best
+            {platformFilter === 'all' ? 'Personal best' : `${PLATFORM_CONFIG[platformFilter]?.name || platformFilter} peak`}
           </p>
         </div>
 
@@ -403,7 +552,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
       {/* 3. Main Rating Performance Graph */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 shadow-sm">
         {/* Graph Header & Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
           <div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 flex items-center justify-center shrink-0">
@@ -414,145 +563,353 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
               </h2>
             </div>
             <p className="text-xs text-[var(--muted)] mt-0.5">
-              Track how your competitive programming rating has changed over time.
+              {isMultiPlatform
+                ? 'Independent curves per platform — ratings are never connected across different platforms.'
+                : `Verified rating progression for ${singlePlatformConfig.name}.`}
             </p>
           </div>
 
-          {/* Range Selector Controls */}
-          <div className="flex items-center gap-1 bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)] self-start sm:self-auto overflow-x-auto max-w-full">
-            {timeRanges.map(range => (
+          {/* Platform Tabs & Range Selector */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Platform Selector Pills */}
+            <div className="flex items-center gap-1 bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)] overflow-x-auto max-w-full">
               <button
-                key={range}
-                onClick={() => setSelectedRange(range)}
+                onClick={() => setPlatformFilter('all')}
                 className={`px-2.5 py-1 text-[11px] font-mono font-medium rounded-md transition-all whitespace-nowrap ${
-                  selectedRange === range
+                  platformFilter === 'all'
                     ? 'bg-[var(--surface)] text-[var(--accent)] border border-[var(--accent)]/30 shadow-xs'
                     : 'text-[var(--muted)] hover:text-[var(--text)]'
                 }`}
               >
-                {range}
+                All Platforms
               </button>
-            ))}
+              {availablePlatforms.map(p => {
+                const cfg = PLATFORM_CONFIG[p] || { name: p, stroke: 'var(--accent)' };
+                const isSelected = platformFilter.toLowerCase() === p;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPlatformFilter(p)}
+                    className={`px-2.5 py-1 text-[11px] font-mono font-medium rounded-md transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-[var(--surface)] text-[var(--text)] border shadow-xs'
+                        : 'text-[var(--muted)] hover:text-[var(--text)]'
+                    }`}
+                    style={isSelected ? { borderColor: `${cfg.stroke}88`, color: cfg.stroke } : {}}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.stroke }} />
+                    <span>{cfg.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Time Range Pills */}
+            <div className="flex items-center gap-1 bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)] overflow-x-auto max-w-full">
+              {timeRanges.map(range => (
+                <button
+                  key={range}
+                  onClick={() => setSelectedRange(range)}
+                  className={`px-2.5 py-1 text-[11px] font-mono font-medium rounded-md transition-all whitespace-nowrap ${
+                    selectedRange === range
+                      ? 'bg-[var(--surface)] text-[var(--accent)] border border-[var(--accent)]/30 shadow-xs'
+                      : 'text-[var(--muted)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* Multi-Platform Legend Header with Live Ratings */}
+        {isMultiPlatform && (
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4 text-xs font-mono pt-2 pb-2.5 border-b border-[var(--border)]/60">
+            <span className="text-[var(--muted)] text-[11px] uppercase tracking-wider">
+              Independent Curves:
+            </span>
+            {availablePlatforms.map(p => {
+              const cfg = PLATFORM_CONFIG[p] || { name: p, stroke: 'var(--accent)' };
+              const currentRating = latestRatingByPlatform[p];
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPlatformFilter(p)}
+                  className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer group"
+                  title={`Click to focus exclusively on ${cfg.name}`}
+                >
+                  <span className="w-3.5 h-1 rounded-full" style={{ backgroundColor: cfg.stroke }} />
+                  <span className="text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">
+                    {cfg.name}:
+                  </span>
+                  <span className="font-semibold text-[var(--text)] font-mono">
+                    {currentRating ?? '—'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Chart Canvas */}
         <div className="h-72 sm:h-80 w-full">
           {ratingChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={ratingChartData}
-                margin={{ top: 12, right: 12, left: -16, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="ratingAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis
-                  dataKey="dateFormatted"
-                  stroke="var(--muted)"
-                  tick={{ fill: 'var(--muted)', fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={{ stroke: 'var(--border)' }}
-                  minTickGap={28}
-                />
-                <YAxis
-                  stroke="var(--muted)"
-                  tick={{ fill: 'var(--muted)', fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                  domain={['dataMin - 35', 'dataMax + 35']}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const point = payload[0].payload;
-                      const change = point.rating_change;
-                      const hasChange = typeof change === 'number';
-                      const isGain = hasChange && change > 0;
-                      const isLoss = hasChange && change < 0;
+              {isMultiPlatform ? (
+                /* Multi-Line Chart: Each platform has its own line and NEVER connects into other platforms */
+                <LineChart
+                  data={ratingChartData}
+                  margin={{ top: 12, right: 12, left: -16, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis
+                    dataKey="dateFormatted"
+                    stroke="var(--muted)"
+                    tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    minTickGap={28}
+                  />
+                  <YAxis
+                    stroke="var(--muted)"
+                    tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={['dataMin - 35', 'dataMax + 35']}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const point = payload[0].payload;
+                        const pointContests: any[] = point.contests || [point];
 
-                      return (
-                        <div className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-3.5 shadow-2xl text-xs space-y-1.5 min-w-[210px]">
-                          <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-1 gap-2">
-                            <span className="font-semibold text-[var(--text)] truncate max-w-[150px]">
-                              {point.name}
-                            </span>
-                            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)]">
-                              {point.platform}
-                            </span>
+                        return (
+                          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-3.5 shadow-2xl text-xs space-y-2.5 min-w-[220px]">
+                            <div className="text-[11px] font-mono text-[var(--muted)] border-b border-[var(--border)] pb-1.5 flex items-center justify-between">
+                              <span>{point.fullDateFormatted}</span>
+                              <span className="text-[10px] text-[var(--muted)] uppercase">
+                                {pointContests.length} {pointContests.length === 1 ? 'Contest' : 'Contests'}
+                              </span>
+                            </div>
+
+                            {pointContests.map((c, idx) => {
+                              const pKey = (c.platform || c.platformKey || '').toLowerCase();
+                              const cfg = PLATFORM_CONFIG[pKey] || { name: c.platform, stroke: 'var(--accent)' };
+                              const change = c.rating_change;
+                              const hasChange = typeof change === 'number';
+                              const isGain = hasChange && change > 0;
+                              const isLoss = hasChange && change < 0;
+
+                              return (
+                                <div
+                                  key={idx}
+                                  className={idx > 0 ? 'pt-2 border-t border-[var(--border)]/60 space-y-1' : 'space-y-1'}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-semibold text-[var(--text)] truncate max-w-[150px]">
+                                      {c.name}
+                                    </span>
+                                    <span
+                                      className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border font-semibold"
+                                      style={{
+                                        backgroundColor: `${cfg.stroke}18`,
+                                        color: cfg.stroke,
+                                        borderColor: `${cfg.stroke}40`
+                                      }}
+                                    >
+                                      {cfg.name}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between text-[var(--muted)]">
+                                    <span>Rating:</span>
+                                    <span className="font-mono font-bold" style={{ color: cfg.stroke }}>
+                                      {c.rating_after ?? c.rating ?? '—'}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between text-[var(--muted)]">
+                                    <span>Rank:</span>
+                                    <span className="font-mono text-[var(--text)] font-semibold">
+                                      {c.rank ? `#${c.rank}` : '—'}
+                                    </span>
+                                  </div>
+
+                                  {hasChange && (
+                                    <div className="flex items-center justify-between text-[var(--muted)]">
+                                      <span>Delta:</span>
+                                      <span
+                                        className={`font-mono font-bold ${
+                                          isGain
+                                            ? 'text-[var(--accent)]'
+                                            : isLoss
+                                            ? 'text-[var(--danger)]'
+                                            : 'text-[var(--muted)]'
+                                        }`}
+                                      >
+                                        {isGain ? `+${change}` : change}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  {availablePlatforms.map(p => {
+                    const cfg = PLATFORM_CONFIG[p] || { name: p, stroke: 'var(--accent)' };
+                    return (
+                      <Line
+                        key={p}
+                        type="monotone"
+                        dataKey={p}
+                        name={cfg.name}
+                        stroke={cfg.stroke}
+                        strokeWidth={2.5}
+                        connectNulls={true}
+                        dot={{
+                          r: 3,
+                          fill: cfg.stroke,
+                          strokeWidth: 0
+                        }}
+                        activeDot={{
+                          r: 6,
+                          fill: cfg.stroke,
+                          stroke: 'var(--bg)',
+                          strokeWidth: 2
+                        }}
+                      />
+                    );
+                  })}
+                </LineChart>
+              ) : (
+                /* Single Platform Area Chart with brand gradient fill */
+                <AreaChart
+                  data={ratingChartData}
+                  margin={{ top: 12, right: 12, left: -16, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="singlePlatformGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={singlePlatformConfig.stroke} stopOpacity={0.25} />
+                      <stop offset="95%" stopColor={singlePlatformConfig.stroke} stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis
+                    dataKey="dateFormatted"
+                    stroke="var(--muted)"
+                    tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    minTickGap={28}
+                  />
+                  <YAxis
+                    stroke="var(--muted)"
+                    tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={['dataMin - 35', 'dataMax + 35']}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const point = payload[0].payload;
+                        const change = point.rating_change;
+                        const hasChange = typeof change === 'number';
+                        const isGain = hasChange && change > 0;
+                        const isLoss = hasChange && change < 0;
 
-                          <div className="flex items-center justify-between text-[var(--muted)]">
-                            <span>Date:</span>
-                            <span className="font-mono text-[var(--text)]">{point.fullDateFormatted}</span>
-                          </div>
+                        return (
+                          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-3.5 shadow-2xl text-xs space-y-1.5 min-w-[210px]">
+                            <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-1 gap-2">
+                              <span className="font-semibold text-[var(--text)] truncate max-w-[150px]">
+                                {point.name}
+                              </span>
+                              <span
+                                className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border font-semibold"
+                                style={{
+                                  backgroundColor: singlePlatformConfig.bg,
+                                  color: singlePlatformConfig.stroke,
+                                  borderColor: singlePlatformConfig.border
+                                }}
+                              >
+                                {singlePlatformConfig.name || point.platform}
+                              </span>
+                            </div>
 
-                          <div className="flex items-center justify-between text-[var(--muted)]">
-                            <span>Rank:</span>
-                            <span className="font-mono text-[var(--text)] font-semibold">
-                              {point.rank !== null && point.rank !== undefined ? `#${point.rank}` : '—'}
-                            </span>
-                          </div>
+                            <div className="flex items-center justify-between text-[var(--muted)]">
+                              <span>Date:</span>
+                              <span className="font-mono text-[var(--text)]">{point.fullDateFormatted}</span>
+                            </div>
 
-                          <div className="flex items-center justify-between text-[var(--muted)]">
-                            <span>Previous Rating:</span>
-                            <span className="font-mono text-[var(--text)]">
-                              {point.rating_before !== null && point.rating_before !== undefined
-                                ? point.rating_before
-                                : '—'}
-                            </span>
-                          </div>
+                            <div className="flex items-center justify-between text-[var(--muted)]">
+                              <span>Rank:</span>
+                              <span className="font-mono text-[var(--text)] font-semibold">
+                                {point.rank !== null && point.rank !== undefined ? `#${point.rank}` : '—'}
+                              </span>
+                            </div>
 
-                          <div className="flex items-center justify-between text-[var(--muted)]">
-                            <span>New Rating:</span>
-                            <span className="font-mono text-[var(--accent)] font-bold">
-                              {point.rating}
-                            </span>
-                          </div>
+                            <div className="flex items-center justify-between text-[var(--muted)]">
+                              <span>Previous Rating:</span>
+                              <span className="font-mono text-[var(--text)]">
+                                {point.rating_before !== null && point.rating_before !== undefined
+                                  ? point.rating_before
+                                  : '—'}
+                              </span>
+                            </div>
 
-                          <div className="flex items-center justify-between text-[var(--muted)] pt-1 border-t border-[var(--border)]">
-                            <span>Delta:</span>
-                            <span
-                              className={`font-mono font-bold ${
-                                isGain
+                            <div className="flex items-center justify-between text-[var(--muted)]">
+                              <span>New Rating:</span>
+                              <span className="font-mono font-bold" style={{ color: singlePlatformConfig.stroke }}>
+                                {point.rating}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[var(--muted)] pt-1 border-t border-[var(--border)]">
+                              <span>Delta:</span>
+                              <span
+                                className={`font-mono font-bold ${
+                                  isGain
                                   ? 'text-[var(--accent)]'
                                   : isLoss
                                   ? 'text-[var(--danger)]'
                                   : 'text-[var(--muted)]'
-                              }`}
-                            >
-                              {hasChange ? (isGain ? `+${change}` : change) : '—'}
-                            </span>
+                                }`}
+                              >
+                                {hasChange ? (isGain ? `+${change}` : change) : '—'}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="rating"
-                  stroke="var(--accent)"
-                  strokeWidth={2.5}
-                  fill="url(#ratingAreaGradient)"
-                  activeDot={{
-                    r: 6,
-                    fill: 'var(--accent)',
-                    stroke: 'var(--bg)',
-                    strokeWidth: 2
-                  }}
-                  dot={{
-                    r: 3,
-                    fill: 'var(--accent)',
-                    strokeWidth: 0
-                  }}
-                />
-              </AreaChart>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="rating"
+                    stroke={singlePlatformConfig.stroke}
+                    strokeWidth={2.5}
+                    fill="url(#singlePlatformGradient)"
+                    activeDot={{
+                      r: 6,
+                      fill: singlePlatformConfig.stroke,
+                      stroke: 'var(--bg)',
+                      strokeWidth: 2
+                    }}
+                    dot={{
+                      r: 3,
+                      fill: singlePlatformConfig.stroke,
+                      strokeWidth: 0
+                    }}
+                  />
+                </AreaChart>
+              )}
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
@@ -616,11 +973,27 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
                         const change = item.delta;
                         const isGain = change > 0;
                         const isLoss = change < 0;
+                        const cfg = PLATFORM_CONFIG[item.platform?.toLowerCase()] || {
+                          name: item.platform,
+                          stroke: 'var(--accent)'
+                        };
 
                         return (
                           <div className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-2.5 shadow-xl text-xs space-y-1">
-                            <div className="font-semibold text-[var(--text)] truncate max-w-[180px]">
-                              {item.name}
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-semibold text-[var(--text)] truncate max-w-[150px]">
+                                {item.name}
+                              </span>
+                              <span
+                                className="text-[10px] font-mono uppercase px-1 py-0.5 rounded border"
+                                style={{
+                                  backgroundColor: `${cfg.stroke}15`,
+                                  color: cfg.stroke,
+                                  borderColor: `${cfg.stroke}40`
+                                }}
+                              >
+                                {cfg.name}
+                              </span>
                             </div>
                             <div className="text-[11px] text-[var(--muted)] font-mono">
                               {item.fullDateFormatted}
@@ -669,7 +1042,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
           </div>
         </div>
 
-        {/* Viz B: Leaderboard Rank Progression */}
+        {/* Viz B: Leaderboard Rank Progression (Multi-line when all platforms, single when filtered) */}
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -684,7 +1057,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
               </span>
             </div>
             <p className="text-xs text-[var(--muted)] mb-4">
-              Finish placement per contest (inverted scale)
+              Finish placement per contest (inverted scale, isolated per platform)
             </p>
           </div>
 
@@ -712,35 +1085,62 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
-                        const item = payload[0].payload;
+                        const point = payload[0].payload;
+                        const pointContests: any[] = point.contests || [point];
+
                         return (
-                          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-2.5 shadow-xl text-xs space-y-1">
-                            <div className="font-semibold text-[var(--text)] truncate max-w-[180px]">
-                              {item.name}
+                          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-2.5 shadow-xl text-xs space-y-1.5">
+                            <div className="text-[11px] font-mono text-[var(--muted)] border-b border-[var(--border)] pb-1">
+                              {point.fullDateFormatted}
                             </div>
-                            <div className="text-[11px] text-[var(--muted)] font-mono">
-                              {item.fullDateFormatted}
-                            </div>
-                            <div className="flex items-center justify-between gap-3 pt-1 border-t border-[var(--border)]">
-                              <span className="text-[var(--muted)]">Finishing Rank:</span>
-                              <span className="font-mono font-bold text-[var(--warm)]">
-                                #{item.rank}
-                              </span>
-                            </div>
+                            {pointContests.map((c, idx) => {
+                              const pKey = (c.platform || c.platformKey || '').toLowerCase();
+                              const cfg = PLATFORM_CONFIG[pKey] || { name: c.platform, stroke: 'var(--warm)' };
+                              return (
+                                <div key={idx} className="flex items-center justify-between gap-3">
+                                  <span className="text-[var(--muted)] flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.stroke }} />
+                                    {cfg.name}:
+                                  </span>
+                                  <span className="font-mono font-bold" style={{ color: cfg.stroke }}>
+                                    #{c.rank}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         );
                       }
                       return null;
                     }}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="rank"
-                    stroke="var(--warm)"
-                    strokeWidth={2}
-                    dot={{ r: 2.5, fill: 'var(--warm)', strokeWidth: 0 }}
-                    activeDot={{ r: 5, fill: 'var(--warm)', stroke: 'var(--bg)', strokeWidth: 2 }}
-                  />
+                  {isMultiPlatform ? (
+                    availablePlatforms.map(p => {
+                      const cfg = PLATFORM_CONFIG[p] || { stroke: 'var(--warm)' };
+                      return (
+                        <Line
+                          key={`rank-${p}`}
+                          type="monotone"
+                          dataKey={`${p}_rank`}
+                          name={p}
+                          stroke={cfg.stroke}
+                          strokeWidth={2}
+                          connectNulls={true}
+                          dot={{ r: 2.5, fill: cfg.stroke, strokeWidth: 0 }}
+                          activeDot={{ r: 4.5, fill: cfg.stroke, stroke: 'var(--bg)', strokeWidth: 2 }}
+                        />
+                      );
+                    })
+                  ) : (
+                    <Line
+                      type="monotone"
+                      dataKey="rank"
+                      stroke={singlePlatformConfig.stroke}
+                      strokeWidth={2}
+                      dot={{ r: 2.5, fill: singlePlatformConfig.stroke, strokeWidth: 0 }}
+                      activeDot={{ r: 5, fill: singlePlatformConfig.stroke, stroke: 'var(--bg)', strokeWidth: 2 }}
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -910,6 +1310,10 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
                     const change = c.rating_change;
                     const isPositive = typeof change === 'number' && change > 0;
                     const isNegative = typeof change === 'number' && change < 0;
+                    const cfg = PLATFORM_CONFIG[c.platform?.toLowerCase()] || {
+                      name: c.platform,
+                      stroke: 'var(--text)'
+                    };
 
                     return (
                       <tr
@@ -920,7 +1324,7 @@ export const ContestsPage: React.FC<ContestsPageProps> = ({ contests, onConnectC
                         <td className="py-3 px-3.5 font-mono capitalize font-medium text-[var(--text)]">
                           <div className="flex items-center gap-2">
                             <PlatformIcon platform={c.platform} className="w-4 h-4 shrink-0" />
-                            <span>{c.platform}</span>
+                            <span>{cfg.name}</span>
                           </div>
                         </td>
                         <td className="py-3 px-3.5 font-medium text-[var(--text)] max-w-xs truncate">
