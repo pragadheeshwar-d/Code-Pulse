@@ -80,9 +80,11 @@ export interface TopicData {
 }
 
 export interface RecentProblem {
+  id?: string;
   platform: PlatformType;
   title: string;
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Other';
+  topic?: string;
   date: string;
   url?: string;
 }
@@ -96,7 +98,7 @@ export interface Goal {
   platform?: PlatformType | null;
   start_date: string;
   end_date: string;
-  status: 'active' | 'completed' | 'expired';
+  status: 'active' | 'completed' | 'expired' | 'failed';
   current?: number;
   progress_percentage?: number;
   created_at: string;
@@ -104,7 +106,9 @@ export interface Goal {
 }
 
 export interface ContestRecord {
+  id?: string;
   platform: PlatformType;
+  external_contest_id?: string;
   name: string;
   contest_date: string;
   url?: string;
@@ -118,7 +122,7 @@ export interface ContestRecord {
 export interface SyncLog {
   id: string;
   platform: PlatformType;
-  status: 'success' | 'failed' | 'in_progress';
+  status: 'success' | 'completed' | 'failed' | 'in_progress';
   started_at: string;
   completed_at: string | null;
   records_processed: number;

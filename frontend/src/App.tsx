@@ -6,6 +6,8 @@ import { CreateGoalModal } from './components/CreateGoalModal';
 import { PlatformDetailModal } from './components/PlatformDetailModal';
 import { AuthModal } from './components/AuthModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { CommandPalette } from './components/CommandPalette';
+import { ToastProvider, useToast } from './components/Toast';
 
 // Pages
 import { DashboardPage } from './pages/DashboardPage';
@@ -36,7 +38,8 @@ import {
   PlatformType
 } from './types';
 
-export const App: React.FC = () => {
+const MainAppContent: React.FC = () => {
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
   const [currentTab, setCurrentTab] = useState<NavItem>('dashboard');
   const [authStatus, setAuthStatus] = useState<'checking' | 'unauthenticated' | 'authenticated'>('checking');
 
@@ -64,8 +67,10 @@ export const App: React.FC = () => {
 
   // Syncing & UI loading state
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Modals state
+  // Modals & Command Palette state
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [connectDefaultPlatform, setConnectDefaultPlatform] = useState<PlatformType>('leetcode');
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -74,11 +79,24 @@ export const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Global Cmd+K / Ctrl+K keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleLogout = async () => {
     await api.logout();
     setUser(null);
     setSettings(null);
     setAuthStatus('unauthenticated');
+    toastInfo('Logged out', 'You have been safely signed out.');
   };
 
   // Load all initial application data
@@ -174,7 +192,7 @@ export const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [authStatus, loadAllData]);
 
-  // Auto-sync connected platforms on load if never synced or stale (>10m)
+  // Auto-sync connected platforms on load if stale (>15m)
   const initialSyncRef = React.useRef(false);
   useEffect(() => {
     if (authStatus !== 'authenticated' || platforms.length === 0 || initialSyncRef.current) return;
@@ -184,7 +202,7 @@ export const App: React.FC = () => {
     const needsSync = connected.some(p => {
       if (!p.last_synced_at) return true;
       const diffMs = Date.now() - new Date(p.last_synced_at).getTime();
-      return diffMs > 10 * 60 * 1000;
+      return diffMs > 15 * 60 * 1000;
     });
 
     if (needsSync && !isSyncing) {
@@ -196,11 +214,15 @@ export const App: React.FC = () => {
   // Sync All
   const handleSyncAll = async () => {
     setIsSyncing(true);
+    setSyncError(null);
     try {
       await api.syncAll();
       await loadAllData();
-    } catch (err) {
-      console.error('Sync all error:', err);
+      toastSuccess('Sync completed', 'Connected coding profiles refreshed successfully.');
+    } catch (err: any) {
+      const msg = err?.message || 'Sync failed';
+      setSyncError(msg);
+      toastError('Sync error', msg);
     } finally {
       setIsSyncing(false);
     }
@@ -208,32 +230,60 @@ export const App: React.FC = () => {
 
   // Sync Single Platform
   const handleSyncPlatform = async (platform: PlatformType) => {
-    await api.syncPlatform(platform);
-    await loadAllData();
+    try {
+      await api.syncPlatform(platform);
+      await loadAllData();
+      toastSuccess('Platform synced', `${platform} stats updated.`);
+    } catch (err: any) {
+      toastError('Sync failed', err?.message || `Could not sync ${platform}`);
+      throw err;
+    }
   };
 
   // Connect platform
   const handleConnectPlatform = async (platform: PlatformType, username: string) => {
-    await api.connectPlatform(platform, username);
-    await loadAllData();
+    try {
+      await api.connectPlatform(platform, username);
+      await loadAllData();
+      toastSuccess('Platform connected', `${platform} account @${username} linked.`);
+    } catch (err: any) {
+      toastError('Connection failed', err?.message || `Could not connect ${platform}`);
+      throw err;
+    }
   };
 
   // Disconnect platform
   const handleDisconnectPlatform = async (platform: PlatformType) => {
-    await api.disconnectPlatform(platform);
-    await loadAllData();
+    try {
+      await api.disconnectPlatform(platform);
+      await loadAllData();
+      toastInfo('Platform disconnected', `${platform} account removed.`);
+    } catch (err: any) {
+      toastError('Disconnect failed', err?.message || `Could not disconnect ${platform}`);
+      throw err;
+    }
   };
 
   // Create Goal
   const handleCreateGoal = async (goalData: any) => {
-    await api.createGoal(goalData);
-    await loadAllData();
+    try {
+      await api.createGoal(goalData);
+      await loadAllData();
+      toastSuccess('Goal created', `Milestone target "${goalData.title}" set.`);
+    } catch (err: any) {
+      toastError('Failed to create goal', err?.message);
+    }
   };
 
   // Delete Goal
   const handleDeleteGoal = async (id: string) => {
-    await api.deleteGoal(id);
-    await loadAllData();
+    try {
+      await api.deleteGoal(id);
+      await loadAllData();
+      toastInfo('Goal removed', 'Milestone target deleted.');
+    } catch (err: any) {
+      toastError('Failed to delete goal', err?.message);
+    }
   };
 
   // Update Profile
@@ -241,6 +291,7 @@ export const App: React.FC = () => {
     const res = await api.updateProfile(data);
     setUser(res.user);
     setSettings(res.settings);
+    toastSuccess('Profile saved', 'Account preferences updated.');
   };
 
   // Modal open helpers
@@ -279,7 +330,7 @@ export const App: React.FC = () => {
   };
 
   if (authStatus === 'checking') {
-    return <div className="min-h-screen bg-[var(--bg)]" aria-label="Checking your session" />;
+    return <div className="min-h-screen bg-[var(--bg)]" aria-label="Checking session" />;
   }
 
   if (authStatus === 'unauthenticated') {
@@ -291,6 +342,7 @@ export const App: React.FC = () => {
         onSuccess={(newUser) => {
           setUser(newUser);
           setAuthStatus('authenticated');
+          toastSuccess('Welcome to CodePulse', `Signed in as ${newUser.name || newUser.email}`);
         }}
       />
     );
@@ -298,9 +350,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-[var(--bg)] text-[var(--text)]">
-      {/* Responsive layout: Single-column flex on mobile, 2-column CSS Grid on desktop (>= lg) */}
-      <div className="min-h-screen min-h-[100dvh] flex flex-col lg:grid lg:grid-cols-[224px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
-        {/* Sidebar: Desktop persistent (Column 1) + Mobile drawer */}
+      <div className="min-h-screen min-h-[100dvh] flex flex-col lg:grid lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)]">
+        {/* Sidebar: Desktop persistent + Mobile drawer */}
         <Sidebar
           currentTab={currentTab}
           onTabChange={(tab) => {
@@ -309,140 +360,142 @@ export const App: React.FC = () => {
           }}
           user={user}
           lastSyncedText={getLastSyncedText()}
+          isSyncing={isSyncing}
           onOpenAuth={() => setIsAuthModalOpen(true)}
           onLogout={handleLogout}
           isMobileOpen={isMobileMenuOpen}
           onCloseMobile={() => setIsMobileMenuOpen(false)}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         />
 
-        {/* Main Content Column (Column 2: min-width: 0; width: auto) */}
+        {/* Main Content Column */}
         <div className="min-w-0 w-auto flex flex-col flex-1">
-          {/* Top Header: Sticky compact on mobile (< lg) */}
+          {/* Top Header: Sticky compact on mobile */}
           <Header
             user={user}
             lastSyncedText={getLastSyncedText()}
             isSyncing={isSyncing}
+            syncError={syncError}
             onSync={handleSyncAll}
             onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
             onOpenProfile={() => {
               setCurrentTab('settings');
               setIsMobileMenuOpen(false);
             }}
+            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
             variant="mobile"
           />
 
-          <main className="flex-1 min-w-0 w-full px-3 xs:px-4 sm:px-6 lg:px-5 xl:px-8 pt-3 xs:pt-4 sm:pt-6 lg:pt-8 content-bottom-safe">
-          {/* Main Top Header */}
-          <Header
-            user={user}
-            lastSyncedText={getLastSyncedText()}
-            isSyncing={isSyncing}
-            onSync={handleSyncAll}
-            onOpenProfile={() => {
-              setCurrentTab('settings');
-            }}
-            currentTab={currentTab}
-            variant="desktop"
-          />
-
-          {/* Page Routing */}
-          {currentTab === 'dashboard' && (
-            <DashboardPage
-              overview={overview}
-              platforms={platforms}
-              chartData={chartData}
-              period={chartPeriod}
-              onPeriodChange={setChartPeriod}
-              activityData={activityData}
-              selectedPlatform={activityPlatform}
-              onSelectPlatform={setActivityPlatform}
-              difficultyData={difficultyData}
-              topicsData={topicsData}
-              goals={goals}
-              recentProblems={recentProblems}
-              insights={insights}
-              onConnectPlatform={openConnectModal}
-              onManagePlatform={openPlatformDetail}
-              onCreateGoal={() => setIsGoalModalOpen(true)}
-              onViewAllProblems={() => setCurrentTab('problems')}
-              onViewAllGoals={() => setCurrentTab('goals')}
-              onDeleteGoal={handleDeleteGoal}
-            />
-          )}
-
-          {currentTab === 'platforms' && (
-            <PlatformsPage
-              platforms={platforms}
-              onConnect={openConnectModal}
-              onManage={openPlatformDetail}
-              onSyncAll={handleSyncAll}
-              isSyncing={isSyncing}
-            />
-          )}
-
-          {currentTab === 'problems' && (
-            <ProblemsPage
-              problems={recentProblems}
-              onConnectClick={() => openConnectModal('leetcode')}
-            />
-          )}
-
-          {currentTab === 'analytics' && (
-            <AnalyticsPage
-              chartData={chartData}
-              period={chartPeriod}
-              onPeriodChange={setChartPeriod}
-              difficultyData={difficultyData}
-              topicsData={topicsData}
-              insights={insights}
-              anyConnected={platforms.some(p => p.connected)}
-              onConnectClick={() => openConnectModal('leetcode')}
-            />
-          )}
-
-          {currentTab === 'goals' && (
-            <GoalsPage
-              goals={goals}
-              onCreateClick={() => setIsGoalModalOpen(true)}
-              onDeleteGoal={handleDeleteGoal}
-            />
-          )}
-
-          {currentTab === 'contests' && (
-            <ContestsPage
-              contests={contests}
-              onConnectClick={() => openConnectModal('codeforces')}
-            />
-          )}
-
-          {currentTab === 'activity' && (
-            <ActivityPage
-              activityData={activityData}
-              selectedPlatform={activityPlatform}
-              onSelectPlatform={setActivityPlatform}
-              overview={overview}
-              onConnectClick={() => openConnectModal('leetcode')}
-            />
-          )}
-
-          {currentTab === 'github' && (
-            <GitHubPage user={user} />
-          )}
-
-          {currentTab === 'settings' && (
-            <SettingsPage
+          <main className="flex-1 min-w-0 w-full px-3 xs:px-4 sm:px-6 lg:px-6 xl:px-8 pt-3 xs:pt-4 sm:pt-6 content-bottom-safe">
+            {/* Desktop Top Header Banner */}
+            <Header
               user={user}
-              settings={settings}
-              platforms={platforms}
-              syncLogs={syncLogs}
-              onUpdateProfile={handleUpdateProfile}
-              onDisconnectPlatform={handleDisconnectPlatform}
-              onConnectPlatform={openConnectModal}
+              lastSyncedText={getLastSyncedText()}
+              isSyncing={isSyncing}
+              syncError={syncError}
+              onSync={handleSyncAll}
+              onOpenProfile={() => {
+                setCurrentTab('settings');
+              }}
+              onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+              currentTab={currentTab}
+              variant="desktop"
             />
-          )}
-        </main>
+
+            {/* Page Views */}
+            {currentTab === 'dashboard' && (
+              <DashboardPage
+                overview={overview}
+                platforms={platforms}
+                chartData={chartData}
+                period={chartPeriod}
+                onPeriodChange={setChartPeriod}
+                recentProblems={recentProblems}
+                insights={insights}
+                goals={goals}
+                onConnectPlatform={openConnectModal}
+                onViewAllProblems={() => setCurrentTab('problems')}
+                onCreateGoal={() => setIsGoalModalOpen(true)}
+                onViewAllGoals={() => setCurrentTab('goals')}
+                onDeleteGoal={handleDeleteGoal}
+              />
+            )}
+
+            {currentTab === 'platforms' && (
+              <PlatformsPage
+                platforms={platforms}
+                onConnect={openConnectModal}
+                onManage={openPlatformDetail}
+                onSyncAll={handleSyncAll}
+                isSyncing={isSyncing}
+              />
+            )}
+
+            {currentTab === 'problems' && (
+              <ProblemsPage
+                problems={recentProblems}
+                onConnectClick={() => openConnectModal('leetcode')}
+              />
+            )}
+
+            {currentTab === 'analytics' && (
+              <AnalyticsPage
+                chartData={chartData}
+                period={chartPeriod}
+                onPeriodChange={setChartPeriod}
+                difficultyData={difficultyData}
+                topicsData={topicsData}
+                insights={insights}
+                anyConnected={platforms.some(p => p.connected)}
+                onConnectClick={() => openConnectModal('leetcode')}
+              />
+            )}
+
+            {currentTab === 'goals' && (
+              <GoalsPage
+                goals={goals}
+                onCreateClick={() => setIsGoalModalOpen(true)}
+                onDeleteGoal={handleDeleteGoal}
+              />
+            )}
+
+            {currentTab === 'contests' && (
+              <ContestsPage
+                contests={contests}
+                onConnectClick={() => openConnectModal('codeforces')}
+              />
+            )}
+
+            {currentTab === 'activity' && (
+              <ActivityPage
+                activityData={activityData}
+                selectedPlatform={activityPlatform}
+                onSelectPlatform={setActivityPlatform}
+                overview={overview}
+                onConnectClick={() => openConnectModal('leetcode')}
+                recentProblems={recentProblems}
+              />
+            )}
+
+            {currentTab === 'github' && (
+              <GitHubPage user={user} />
+            )}
+
+            {currentTab === 'settings' && (
+              <SettingsPage
+                user={user}
+                settings={settings}
+                platforms={platforms}
+                syncLogs={syncLogs}
+                onUpdateProfile={handleUpdateProfile}
+                onDisconnectPlatform={handleDisconnectPlatform}
+                onConnectPlatform={openConnectModal}
+                onLogout={handleLogout}
+              />
+            )}
+          </main>
+        </div>
       </div>
-    </div>
 
       {/* Mobile Bottom Navigation Bar (< lg) */}
       <MobileBottomNav
@@ -452,6 +505,19 @@ export const App: React.FC = () => {
           setIsMobileMenuOpen(false);
         }}
         onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+      />
+
+      {/* Command Palette (Cmd+K / Ctrl+K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigate={(tab) => {
+          setCurrentTab(tab);
+          setIsMobileMenuOpen(false);
+        }}
+        onSync={handleSyncAll}
+        onCreateGoal={() => setIsGoalModalOpen(true)}
+        onConnectPlatform={() => openConnectModal('leetcode')}
       />
 
       {/* Interactive Modals */}
@@ -486,5 +552,13 @@ export const App: React.FC = () => {
         }}
       />
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <ToastProvider>
+      <MainAppContent />
+    </ToastProvider>
   );
 };

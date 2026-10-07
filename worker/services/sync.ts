@@ -175,8 +175,12 @@ export class SyncService {
 
     const results = [];
     for (const acc of accounts) {
-      const res = await this.syncPlatform(userId, acc.platform);
-      results.push({ platform: acc.platform, ...res });
+      try {
+        const res = await this.syncPlatform(userId, acc.platform);
+        results.push({ platform: acc.platform, ...res });
+      } catch (err: any) {
+        results.push({ platform: acc.platform, success: false, error: err.message || 'Sync failed' });
+      }
     }
     
     return results;

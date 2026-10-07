@@ -6,12 +6,16 @@ interface ActivityHeatmapProps {
   activityData: HeatmapDay[];
   selectedPlatform: string;
   onSelectPlatform: (platform: string) => void;
+  selectedDay?: string | null;
+  onSelectDay?: (dateStr: string) => void;
 }
 
 export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   activityData,
   selectedPlatform,
-  onSelectPlatform
+  onSelectPlatform,
+  selectedDay,
+  onSelectDay
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -212,18 +216,20 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                     }
 
                     const isToday = day.isToday;
+                    const isSelected = selectedDay === day.dateStr;
                     const titleText = totalCount > 0
-                      ? `${formatTooltipDate(day.dateStr)}${isToday ? ' (Today)' : ''}: ${solved} solved, ${subs} submissions`
+                      ? `${formatTooltipDate(day.dateStr)}${isToday ? ' (Today)' : ''}: ${solved} solved, ${subs} submissions (Click to view)`
                       : `${formatTooltipDate(day.dateStr)}${isToday ? ' (Today)' : ''}: No activity recorded`;
 
                     return (
                       <div
                         key={dIdx}
+                        onClick={() => onSelectDay?.(day.dateStr)}
                         title={titleText}
                         className={`w-[11px] h-[11px] rounded-[2px] border ${getColorClass(
                           level,
                           isToday
-                        )} transition-transform hover:scale-125 cursor-pointer`}
+                        )} ${isSelected ? 'ring-2 ring-[var(--primary)] ring-offset-1 ring-offset-[var(--surface)] z-20 scale-125' : ''} transition-transform hover:scale-125 cursor-pointer`}
                       />
                     );
                   })}

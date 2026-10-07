@@ -3,23 +3,29 @@
 @tailwind utilities;
 
 :root {
-  --bg: #0E0F11;
-  --surface: #17181B;
-  --border: #26282D;
-  --primary: #E4E4E7;
-  --on-primary: #111214;
+  --bg: #0A0A0B;
+  --surface: #111113;
+  --surface-hover: #171719;
+  --surface-active: #1C1C20;
+  --border: #252529;
+  --border-subtle: #1C1C20;
+  --primary: #F5F5F5;
+  --on-primary: #0A0A0B;
   --accent: #34D399;
-  --text: #ECECEF;
-  --muted: #A1A1AA;
-  --warm: #F5B94A;
+  --accent-muted: rgba(52, 211, 153, 0.12);
+  --text: #F5F5F5;
+  --muted: #9E9EA8;
+  --warm: #F59E0B;
+  --warm-muted: rgba(245, 158, 11, 0.12);
   --danger: #F87171;
+  --danger-muted: rgba(248, 113, 113, 0.12);
 
   /* Heatmap levels */
-  --heatmap-0: #202226;
+  --heatmap-0: #161619;
   --heatmap-1: #0E4429;
   --heatmap-2: #006D32;
   --heatmap-3: #26A641;
-  --heatmap-4: #39D353;
+  --heatmap-4: #34D399;
 }
 
 @layer base {
@@ -124,6 +130,22 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: var(--text) !important;
   transition: background-color 5000s ease-in-out 0s;
   caret-color: var(--accent);
+}
+
+/* Keyboard shortcut styling */
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  background-color: var(--surface-active);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
 }
 
 /* Accessibility: Respect user motion preferences */

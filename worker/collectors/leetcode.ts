@@ -203,21 +203,29 @@ export class LeetCodeCollector extends BaseCollector {
 
     // Recent problems with authentic difficulty and topic resolved from LeetCode
     const recentSubmissionsRaw = json?.data?.recentAcSubmissionList || [];
-    const recent_problems: NormalizedProblem[] = await Promise.all(
-      recentSubmissionsRaw.slice(0, 20).map(async (sub: any) => {
-        const meta = await this.getQuestionMeta(sub.titleSlug);
-        return {
-          platform: 'leetcode' as const,
-          external_id: sub.id || sub.titleSlug,
-          title: sub.title,
-          slug: sub.titleSlug,
-          url: `https://leetcode.com/problems/${sub.titleSlug}/`,
-          difficulty: meta.difficulty,
-          topic: meta.topic,
-          solved_at: new Date(parseInt(sub.timestamp, 10) * 1000).toISOString()
-        };
-      })
-    );
+    const recent_problems: NormalizedProblem[] = [];
+    let subrequestCount = 0;
+
+    for (const sub of recentSubmissionsRaw.slice(0, 20)) {
+      let meta: { difficulty: 'Easy' | 'Medium' | 'Hard' | 'Other'; topic?: string } = { difficulty: 'Medium' };
+      if (LeetCodeCollector.questionMetaCache.has(sub.titleSlug)) {
+        meta = LeetCodeCollector.questionMetaCache.get(sub.titleSlug)!;
+      } else if (subrequestCount < 3) {
+        subrequestCount++;
+        meta = await this.getQuestionMeta(sub.titleSlug);
+      }
+
+      recent_problems.push({
+        platform: 'leetcode' as const,
+        external_id: sub.id || sub.titleSlug,
+        title: sub.title,
+        slug: sub.titleSlug,
+        url: `https://leetcode.com/problems/${sub.titleSlug}/`,
+        difficulty: meta.difficulty || 'Medium',
+        topic: meta.topic,
+        solved_at: new Date(parseInt(sub.timestamp, 10) * 1000).toISOString()
+      });
+    }
 
     // Activities from submissionCalendar
     const activities: NormalizedActivity[] = [];

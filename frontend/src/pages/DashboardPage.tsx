@@ -4,7 +4,12 @@ import {
   Calendar,
   Flame,
   CloudUpload,
-  Sparkles
+  Target,
+  ArrowRight,
+  Plus,
+  Sparkles,
+  CheckCircle2,
+  TrendingUp
 } from 'lucide-react';
 import { MetricCard } from '../components/MetricCard';
 import { ProblemsChart } from '../components/ProblemsChart';
@@ -14,7 +19,8 @@ import {
   DashboardOverview,
   ChartPoint,
   RecentProblem,
-  PlatformType
+  PlatformType,
+  Goal
 } from '../types';
 
 interface DashboardPageProps {
@@ -25,15 +31,9 @@ interface DashboardPageProps {
   onPeriodChange: (period: string) => void;
   recentProblems: RecentProblem[];
   insights: string[];
+  goals?: Goal[];
   onConnectPlatform: (platform: PlatformType) => void;
   onViewAllProblems: () => void;
-  activityData?: any;
-  selectedPlatform?: string;
-  onSelectPlatform?: (p: string) => void;
-  difficultyData?: any;
-  topicsData?: any;
-  goals?: any[];
-  onManagePlatform?: (platform: PlatformType) => void;
   onCreateGoal?: () => void;
   onViewAllGoals?: () => void;
   onDeleteGoal?: (id: string) => void;
@@ -47,8 +47,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onPeriodChange,
   recentProblems,
   insights,
+  goals = [],
   onConnectPlatform,
-  onViewAllProblems
+  onViewAllProblems,
+  onCreateGoal,
+  onViewAllGoals
 }) => {
   const anyConnected = platforms.some(p => p.connected);
   const totalSolvedFromPlatforms = platforms.reduce((sum, p) => sum + (p.stats?.total_solved || 0), 0);
@@ -66,61 +69,87 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  // Find active focus goal
+  const activeGoals = goals.filter(g => g.status === 'active');
+  const todayGoal = activeGoals[0] || null;
+
+  // Contextual activity message
+  const getContextualMessage = () => {
+    if (!anyConnected) {
+      return 'Connect your competitive programming accounts to track problems and streaks.';
+    }
+    if (todayGoal) {
+      const remaining = Math.max(0, todayGoal.target - (todayGoal.current || 0));
+      if (remaining === 0) {
+        return 'Today’s primary goal achieved! Great work keeping momentum.';
+      }
+      return `Keep the momentum going. ${remaining} ${todayGoal.goal_type === 'problems_solved' ? 'problems' : 'units'} left to complete your goal.`;
+    }
+    if (currentStreak && currentStreak > 0) {
+      return `You have an active ${currentStreak}-day coding streak. Keep it alive today!`;
+    }
+    return 'Track what you solved today and plan what to solve next.';
   };
 
   return (
-    <div className="space-y-6">
-      {/* 0. Hero Greeting Banner */}
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-sm">
-        <div className="min-w-0">
-          <h2 className="text-lg sm:text-xl font-bold text-[var(--text)] tracking-tight font-sans">
+    <div className="space-y-5">
+      {/* 1. Header & Contextual Status */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
+        <div>
+          <h2 className="text-base sm:text-lg font-semibold text-[var(--text)] tracking-tight">
             {getGreeting()}, Developer
           </h2>
           <p className="text-xs text-[var(--muted)] mt-0.5">
-            Verified competitive programming stats & problem-solving progression
+            {getContextualMessage()}
           </p>
         </div>
-        {currentStreak !== null && currentStreak !== undefined ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--warm)]/10 border border-[var(--warm)]/20 text-[var(--warm)] self-start sm:self-auto font-mono text-xs font-semibold shrink-0 whitespace-nowrap">
-            <Flame className="w-4 h-4 text-[var(--warm)] shrink-0" />
-            <span>{currentStreak} Day Active Streak</span>
+
+        {currentStreak !== null && currentStreak !== undefined && currentStreak > 0 ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--warm-muted)] border border-[var(--warm)]/20 text-[var(--warm)] text-xs font-mono font-medium shrink-0 self-start sm:self-auto">
+            <Flame className="w-3.5 h-3.5 text-[var(--warm)] shrink-0" />
+            <span>{currentStreak} Day Streak</span>
+            {longestStreak && longestStreak > currentStreak && (
+              <span className="text-[10px] text-[var(--muted)] border-l border-[var(--warm)]/30 pl-2">
+                Best: {longestStreak}d
+              </span>
+            )}
           </div>
-        ) : (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] self-start sm:self-auto text-xs font-medium shrink-0 whitespace-nowrap">
-            <span>Real-time Sync Active</span>
-          </div>
-        )}
+        ) : null}
       </div>
 
-      {/* 1. Essential Top Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 xl:gap-4">
+      {/* 2. Key Metrics Row (Compact, dense developer layout) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
-          title="Total Problems Solved"
+          title="Problems Solved"
           value={totalProblems}
           icon={ListOrdered}
           iconColor="text-[var(--accent)]"
           hasData={effectiveHasData}
+          subtitle="Verified solves"
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
-          title="Active Solving Days"
+          title="Active Days"
           value={activeDays}
           icon={Calendar}
           iconColor="text-[var(--accent)]"
           hasData={effectiveHasData}
+          subtitle="Days with activity"
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
-          title="Current Active Streak"
-          value={effectiveHasData && currentStreak !== null && currentStreak !== undefined ? `${currentStreak} day${currentStreak === 1 ? '' : 's'}` : null}
+          title="Current Streak"
+          value={effectiveHasData && currentStreak !== null && currentStreak !== undefined ? `${currentStreak}d` : null}
           icon={Flame}
           iconColor="text-[var(--warm)]"
           hasData={effectiveHasData}
-          badge={effectiveHasData && longestStreak ? `Max: ${longestStreak}d` : undefined}
-          subtitle={effectiveHasData && longestStreak ? `Max streak: ${longestStreak} days` : 'Verified stats'}
+          badge={effectiveHasData && longestStreak ? `Max ${longestStreak}d` : undefined}
+          subtitle={effectiveHasData && longestStreak ? `Max: ${longestStreak} days` : 'Consecutive days'}
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
         <MetricCard
@@ -129,13 +158,97 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           icon={CloudUpload}
           iconColor="text-[var(--accent)]"
           hasData={effectiveHasData}
+          subtitle="Across all handles"
           onConnectClick={() => onConnectPlatform('leetcode')}
         />
       </div>
 
-      {/* 2. Main Essential Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 xl:gap-6">
-        {/* Left Column (Span 2): Solved Trajectory Chart */}
+      {/* 3. Today's Focus Card */}
+      <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-[var(--accent)]" />
+            <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[var(--text)]">
+              Today&apos;s Focus
+            </h3>
+          </div>
+          {todayGoal && (
+            <button
+              onClick={onViewAllGoals}
+              className="text-xs text-[var(--muted)] hover:text-[var(--accent)] flex items-center gap-1 transition-colors"
+            >
+              <span>All goals ({goals.length})</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        {todayGoal ? (
+          <div className="pt-3.5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--text)] font-sans">
+                  {todayGoal.title}
+                </h4>
+                <p className="text-xs text-[var(--muted)] capitalize mt-0.5 font-mono">
+                  {todayGoal.platform || 'All platforms'} · {todayGoal.goal_type.replace(/_/g, ' ')}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono font-semibold text-[var(--text)]">
+                  {todayGoal.current || 0} / {todayGoal.target}
+                </span>
+                <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--surface-active)] text-[var(--accent)] border border-[var(--border)] font-semibold">
+                  {todayGoal.progress_percentage || 0}%
+                </span>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full h-1.5 bg-[var(--bg)] rounded-full overflow-hidden border border-[var(--border)]">
+              <div
+                className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
+                style={{ width: `${Math.min(todayGoal.progress_percentage || 0, 100)}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-[var(--muted)] pt-0.5">
+              <span>
+                {Math.max(0, todayGoal.target - (todayGoal.current || 0))} remaining to achieve goal
+              </span>
+              <button
+                onClick={onViewAllGoals}
+                className="text-[var(--accent)] hover:underline font-medium flex items-center gap-1"
+              >
+                <span>Continue</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div>
+              <p className="font-medium text-[var(--text)]">No active coding goals</p>
+              <p className="text-[var(--muted)] mt-0.5">
+                Set a daily problem count, rating milestone, or contest target to track progression.
+              </p>
+            </div>
+            {onCreateGoal && (
+              <button
+                onClick={onCreateGoal}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--primary)] text-[var(--on-primary)] font-semibold text-xs hover:opacity-90 transition shrink-0 self-start sm:self-auto"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create goal</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 4. Trajectory Chart & Recent Solves Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
           <ProblemsChart
             data={chartData}
@@ -146,7 +259,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           />
         </div>
 
-        {/* Right Column (Span 1): Recent Submissions */}
         <div className="lg:col-span-1">
           <RecentActivityTable
             problems={recentProblems}
@@ -156,22 +268,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* 3. Performance Insights */}
+      {/* 5. Performance Insights Snapshot */}
       {insights.length > 0 && (
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 flex items-start gap-3 shadow-sm">
-          <div className="w-7 h-7 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" />
+        <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-[var(--accent)]" />
+            <h4 className="text-xs font-mono font-semibold uppercase tracking-wider text-[var(--text)]">
+              Performance Snapshot
+            </h4>
           </div>
-          <div>
-            <h4 className="text-xs font-semibold text-[var(--text)] tracking-wide uppercase font-mono">Performance Insights</h4>
-            <div className="mt-1.5 space-y-1">
-              {insights.map((ins, i) => (
-                <p key={i} className="text-xs text-[var(--text)]/90 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0" />
-                  <span>{ins}</span>
-                </p>
-              ))}
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {insights.map((ins, i) => (
+              <div
+                key={i}
+                className="p-2.5 rounded-lg bg-[var(--bg)] border border-[var(--border-subtle)] text-xs text-[var(--text)]/90 flex items-start gap-2.5"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mt-1.5 shrink-0" />
+                <span className="leading-relaxed">{ins}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

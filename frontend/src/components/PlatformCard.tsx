@@ -92,27 +92,31 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
           <div
             className="flex items-center gap-1.5 shrink-0"
             role="status"
-            aria-label={`Status: ${isConnected ? 'Connected' : data.connection_status === 'error' ? 'Error' : 'Offline'}`}
+            aria-label={`Status: ${data.connection_status === 'error' ? 'Needs attention' : isConnected ? 'Connected' : 'Not connected'}`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                isConnected
-                  ? 'bg-[var(--accent)] animate-pulse'
-                  : data.connection_status === 'error'
+                data.connection_status === 'error'
                   ? 'bg-[var(--danger)]'
-                  : 'bg-[var(--muted)]/50'
+                  : isConnected
+                  ? 'bg-[var(--accent)]'
+                  : 'bg-[var(--muted)]/40'
               }`}
             />
             <span
-              className={`text-[10px] font-medium ${
-                isConnected
-                  ? 'text-[var(--accent)]'
-                  : data.connection_status === 'error'
+              className={`text-[10px] font-mono font-medium ${
+                data.connection_status === 'error'
                   ? 'text-[var(--danger)]'
+                  : isConnected
+                  ? 'text-[var(--accent)]'
                   : 'text-[var(--muted)]'
               }`}
             >
-              {isConnected ? 'Live' : data.connection_status === 'error' ? 'Error' : 'Offline'}
+              {data.connection_status === 'error'
+                ? 'Needs attention'
+                : isConnected
+                ? 'Connected'
+                : 'Not connected'}
             </span>
           </div>
         </div>
